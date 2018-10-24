@@ -1,0 +1,16 @@
+Package: spBFA
+Type: Package
+Title: Spatial Bayesian Factor Analysis
+Version: 1.0
+Date: 2018-10-15
+Authors@R: person("Samuel I.", "Berchuck", email = "sib2@duke.edu", role = c("aut", "cre"))
+Description: Implements a spatial Bayesian factor analysis regression model.
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.0
+NeedsCompilation: yes
+Depends: R (>= 3.0.2)
+Imports: graphics, grDevices, msm (>= 1.0.0), mvtnorm (>= 1.0-0), Rcpp (>= 0.12.9), stats, utils
+Suggests: coda, classInt, knitr, rmarkdown, womblR (>= 1.0.3)
+LinkingTo: Rcpp, RcppArmadillo (>= 0.7.500.0.0)
