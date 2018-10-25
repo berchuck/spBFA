@@ -34,8 +34,8 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   BeginBurnInProgress(McmcObj, Interactive);
 
   //Begin MCMC Sampler
-  // for (int s = 1; s < NTotal + 1; s++) {
-  for (int s = 1; s < 25; s++) {
+  for (int s = 1; s < NTotal + 1; s++) {
+  // for (int s = 1; s < 25; s++) {
 
     //Check for user interrupt every 500 iterations
     if (s % 500 == 0) Rcpp::checkUserInterrupt();
@@ -75,11 +75,6 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     //Gibbs step for Sigma2
     Para = SampleSigma2(DatObj, Para, HyPara);
     
-    Rcpp::Rcout << std::fixed << Para.Psi << std::endl;
-    // Rcpp::Rcout << std::fixed << Para.Sigma << std::endl;
-    // Rcpp::Rcout << std::fixed << Para.SigmaInv << std::endl;
-    // Rcpp::Rcout << std::fixed << Para.BigPsi << std::endl;
-
     //Pilot adaptation
     if (std::find(WhichPilotAdapt.begin(), WhichPilotAdapt.end(), s) != WhichPilotAdapt.end())
       MetrObj = PilotAdaptation(MetrObj, McmcObj);

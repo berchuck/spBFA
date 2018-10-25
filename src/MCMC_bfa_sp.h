@@ -143,8 +143,8 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara);
 para SampleUpsilon(datobj DatObj, para Para, hypara HyPara);
 std::pair<para, metrobj> SamplePsi(datobj DatObj, para Para, hypara HyPara, metrobj MetrObj);
 para SampleSigma2(datobj DatObj, para Para, hypara HyPara);
-arma::vec SampleProbit(datobj DatObj, para Para, dataug DatAug);
-arma::vec SampleTobit(datobj DatObj, para Para, dataug DatAug);
+arma::colvec SampleProbit(datobj DatObj, para Para, dataug DatAug);
+arma::colvec SampleTobit(datobj DatObj, para Para, dataug DatAug);
 datobj SampleY(datobj DatObj, para Para, dataug DatAug);
 
 //MCMC UTILITY FUNCTIONS

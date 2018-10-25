@@ -47,8 +47,7 @@ Starting <- list(Sigma2 = 1,
 ###Hyperparameters
 Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
                Kappa2 = list(C = 0.001, D = 0.001),
-               Delta1 = list(A1 = 1),
-               Deltah = list(A2 = 1),
+               Delta = list(A1 = 1, A2 = 2),
                Psi = list(APsi = APsi, BPsi = BPsi),
                Upsilon = list(Zeta = K + 1, Omega = diag(K)))
 
@@ -59,7 +58,20 @@ Tuning <- list(Psi = 1)
 MCMC <- list(NBurn = 1000, NSims = 2500, NThin = 1, NPilot = 10)
 
 ###Fit sampler
-# reg.bfa_sp <- bfa_sp(Y = Y, W = W, Time = Time, K = K, L = L, 
-#                      Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, 
-#                      ScaleY = 1, Rho = 0.99, Family = "tobit", Seed = 54)
+reg.bfa_sp <- bfa_sp(Y = Y, W = W, Time = Time, K = K, L = L,
+                     Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC,
+                     ScaleY = 1, Rho = 0.99, Family = "tobit", Seed = 54)
+
+###Posterior checks
+library(coda)
+traceplot(as.mcmc(reg.bfa_sp$psi))
+traceplot(as.mcmc(reg.bfa_sp$lambda[, 100]))
+traceplot(as.mcmc(reg.bfa_sp$eta[, 6]))
+
+traceplot(as.mcmc(reg.bfa_sp$sigma2[, 2]))
+traceplot(as.mcmc(reg.bfa_sp$kappa2))
+par(mfcol = c(2, 3))
+traceplot(as.mcmc(1 / reg.bfa_sp$tau))
+
+
 

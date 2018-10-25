@@ -99,19 +99,13 @@ CreateHyPara <- function(Hypers, DatObj) {
     D <- 1
   }
 
-  ###Set hyperparameters for Delta1
-  if ("Delta1" %in% UserHypers) {
-    A1 <- Hypers$Delta1$A1
+  ###Set hyperparameters for Delta
+  if ("Delta" %in% UserHypers) {
+    A1 <- Hypers$Delta$A1
+    A2 <- Hypers$Delta$A2
   }
-  if (!("Delta1" %in% UserHypers)) {
+  if (!("Delta" %in% UserHypers)) {
     A1 <- 1
-  }
-  
-  ###Set hyperparameters for Deltah
-  if ("Deltah" %in% UserHypers) {
-    A2 <- Hypers$Deltah$A2
-  }
-  if (!("Deltah" %in% UserHypers)) {
     A2 <- 1
   }
 
@@ -240,7 +234,7 @@ CreatePara <- function(Starting, DatObj, HyPara) {
     }
     if (TempCorInd == 1) { #ar1
       Psi <- Starting$Psi
-      if ((Psi <= -1) | (Psi >= 1)) stop('Starting: "Psi" must be in (-1, 1)')
+      if ((Psi <= APsi) | (Psi >= BPsi)) stop('Starting: "Psi" must be in (APsi, BPsi)')
     }
   }
   if ((!"Psi" %in% UserStarters)) {

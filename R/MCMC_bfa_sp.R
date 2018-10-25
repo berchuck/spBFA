@@ -158,20 +158,20 @@ bfa_sp <- function(Y, W, Time, K, L,
                    Rho = 0.99, ScaleY = 10, Seed = 54) {
 
   ###Function Inputs
-  Y = Y
-  W = W
-  Time = Time
-  Starting = Starting
-  Hypers = Hypers
-  Tuning = Tuning
-  MCMC = MCMC
-  Family = "tobit"
-  TemporalStructure = "exponential"
-  Rho = 0.99
-  ScaleY = 1
-  Seed = 54
-  K = K
-  L = L
+  # Y = Y
+  # W = W
+  # Time = Time
+  # Starting = Starting
+  # Hypers = Hypers
+  # Tuning = Tuning
+  # MCMC = MCMC
+  # Family = "tobit"
+  # TemporalStructure = "exponential"
+  # Rho = 0.99
+  # ScaleY = 1
+  # Seed = 54
+  # K = K
+  # L = L
 
   ###Check for missing objects
   if (missing(Y)) stop("Y: missing")
@@ -181,7 +181,7 @@ bfa_sp <- function(Y, W, Time, K, L,
   if (missing(L)) stop("L: missing")
   
   ###Check model inputs
-  # CheckInputs(Y, DM, W, Time, Starting, Hypers, Tuning, MCMC, Family, Distance, Weights, Rho, ScaleY, ScaleDM)
+  CheckInputs(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, Rho, ScaleY)
 
   ####Set seed for reproducibility
   set.seed(Seed)
@@ -218,22 +218,21 @@ bfa_sp <- function(Y, W, Time, K, L,
   Metropolis <- SummarizeMetropolis(DatObj, MetrObj, MetropRcpp, McmcObj)
   Samples <- FormatSamples(DatObj, RawSamples)
 
-  ###Return spBDwDM object
-  spCP <- list(alpha = Samples$Alpha,
-               delta = Samples$Delta,
-               sigma = Samples$Sigma,
-               beta0 = Samples$Beta0,
-               beta1 = Samples$Beta1,
-               lambda0 = Samples$Lambda0,
-               lambda1 = Samples$Lambda1,
-               eta = Samples$Eta,
-               theta = Samples$Theta,
-               metropolis = Metropolis,
-               datobj = DatObjOut,
-               dataug = DatAugOut,
-               runtime = paste0("Model runtime: ",round(RunTime, 2), " ",attr(RunTime, "units")))
-  spCP <- structure(spCP, class = "spCP")
-  return(spCP)
+  ###Return spBFA object
+  spBFA <- list(lambda = Samples$Lambda,
+                eta = Samples$Eta,
+                sigma2 = Samples$Sigma2,
+                kappa2 = Samples$Kappa2,
+                delta = Samples$Delta,
+                tau = Samples$Tau,
+                upsilon = Samples$Upsilon,
+                psi = Samples$Psi,
+                metropolis = Metropolis,
+                datobj = DatObjOut,
+                dataug = DatAugOut,
+                runtime = paste0("Model runtime: ",round(RunTime, 2), " ",attr(RunTime, "units")))
+  spBFA <- structure(spBFA, class = "spBFA")
+  return(spBFA)
 
 ###End sampler
 }

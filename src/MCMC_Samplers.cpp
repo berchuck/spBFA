@@ -3,7 +3,7 @@
 #include "MCMC_bfa_sp.h"
 
 //Function to sample latent probit process using Gibbs sampling step------------------------------------------------
-arma::vec SampleProbit(datobj DatObj, para Para, dataug DatAug) {
+arma::colvec SampleProbit(datobj DatObj, para Para, dataug DatAug) {
   
   //Set data objects
   arma::colvec YStar = DatObj.YStar;
@@ -28,13 +28,13 @@ arma::vec SampleProbit(datobj DatObj, para Para, dataug DatAug) {
   for (int i = 0; i < NBelow; i++) {
     double Temp = rtnormRcpp(Mu(i), SD(i), true);
     if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), -100000, 0);
-    if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Tobit sampling step. Most likey cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Tobit model. Consider scaling towards zero and re-running.");
+    if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Probit sampling step. Most likey cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Probit model. Consider scaling towards zero and re-running.");
     YStar(WhichBelow(i)) = Temp;
   }
   for (int i = 0; i < NAbove; i++) {
     double Temp = rtnormRcpp(Mu(i), SD(i), false);
     if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), 0, 100000);
-    if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Tobit sampling step. Most likey cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Tobit model. Consider scaling towards zero and re-running.");
+    if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Probit sampling step. Most likey cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Probit model. Consider scaling towards zero and re-running.");
     YStar(WhichAbove(i)) = Temp;
   }
   return YStar;
@@ -44,7 +44,7 @@ arma::vec SampleProbit(datobj DatObj, para Para, dataug DatAug) {
 
 
 //Function to sample latent tobit process using Gibbs sampling step------------------------------------------------
-arma::vec SampleTobit(datobj DatObj, para Para, dataug DatAug) {
+arma::colvec SampleTobit(datobj DatObj, para Para, dataug DatAug) {
   
   //Set data objects
   arma::colvec YStar = DatObj.YStar;
@@ -450,7 +450,7 @@ para SampleAlpha(datobj DatObj, para Para) {
       arma::mat CovAlpha = CholInv(EyeM + ICAR / Kappa2);
       arma::colvec MeanAlpha = CovAlpha * arma::trans(ZJ.row(l));
       arma::colvec AlphaJL = rmvnormRcpp(1, MeanAlpha, CovAlpha);
-      AlphaJL = (AlphaJL - arma::mean(AlphaJL)); // center
+      // AlphaJL = (AlphaJL - arma::mean(AlphaJL)); // center
       AlphaJ.row(l) = arma::trans(AlphaJL);  
         
     //End loop over clusters  

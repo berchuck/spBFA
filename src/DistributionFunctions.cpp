@@ -7,9 +7,9 @@
 //   return ret;
 // }
 arma::vec sampleRcpp(arma::Col<int> const& x, int size, bool replace, arma::vec const& prob) {
-  Rcpp::NumericVector xNV = Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(x));
+  Rcpp::IntegerVector xIV = Rcpp::as<Rcpp::IntegerVector>(Rcpp::wrap(x));
   Rcpp::NumericVector probNV = Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(prob));
-  Rcpp::NumericVector ret = Rcpp::RcppArmadillo::sample(xNV, size, replace, probNV);
+  Rcpp::IntegerVector ret = Rcpp::RcppArmadillo::sample(xIV, size, replace, probNV);
   return Rcpp::as<arma::vec>(ret);
 }
 
