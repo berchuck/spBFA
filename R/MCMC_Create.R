@@ -506,7 +506,8 @@ CreateStorage <- function(DatObj, McmcObj) {
   # Delta: K
   # Upsilon: K x (K + 1) / 2
   # Psi: 1
-  Out <- matrix(nrow = (M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1), ncol = NKeep)
+  # Xi: M * K
+  Out <- matrix(nrow = (M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K), ncol = NKeep)
   return(Out)
 
 }

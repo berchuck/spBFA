@@ -105,10 +105,11 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   arma::colvec Delta = Para.Delta;
   arma::mat Upsilon = Para.Upsilon;
   double Psi = Para.Psi;
+  arma::umat Xi = Para.Xi;
 
   //Save raw samples
   int counter = 0;
-  arma::colvec col(M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1);
+  arma::colvec col(M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K);
   for (arma::uword i = 0; i < M; i++) {
     for (arma::uword j = 0; j < K; j++) {
       col(counter) = Lambda(i, j);
@@ -138,6 +139,13 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
     }
   }
   col(counter) = Psi;
+  counter++;
+  for (arma::uword i = 0; i < M; i++) {
+    for (arma::uword j = 0; j < K; j++) {
+      col(counter) = Xi(i, j);
+      counter++;
+    }
+  }
   return col;
 }
 
