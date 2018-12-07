@@ -1,6 +1,25 @@
 #include <RcppArmadillo.h>
 #include "MCMC_bfa_sp.h"
 
+//Function to get LStarJ vector-------------------------------------------
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::export]]
+arma::colvec GetLStarJ(arma::mat const& U, arma::cube const& Weights, int K, int M) {
+  arma::rowvec OneMinusUStar = arma::rowvec(K).ones() - arma::min(U);
+  arma::colvec LStarJ(K), LStarIJ(M);
+  for (arma::uword j = 0; j < K; j++) {
+    double OneMinusUStarJ = OneMinusUStar(j);
+    arma::mat WeightsJ = Weights.slice(j);
+    for (arma::uword i = 0; i < M; i++) {
+      LStarIJ(i) = arma::as_scalar(arma::find(arma::cumsum(WeightsJ.col(i)) > OneMinusUStarJ, 1));
+    }  
+    LStarJ(j) = arma::max(LStarIJ);
+  }
+  return LStarJ;
+}
+
+
+
 //Function to get Lambda matrix-------------------------------------------
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]

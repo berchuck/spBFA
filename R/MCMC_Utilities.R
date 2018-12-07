@@ -17,6 +17,7 @@ FormatSamples <- function(DatObj, RawSamples) {
   Upsilon <- RawSamples[, (M * K + K * Nu + M + 1 + K + 1):(M * K + K * Nu + M + 1 + K + (K * (K + 1)) / 2)]
   Psi <- RawSamples[, (M * K + K * Nu + M + 1 + K + (K * (K + 1)) / 2 + 1), drop = FALSE]
   Xi <- RawSamples[, (M * K + K * Nu + M + 1 + K + (K * (K + 1)) / 2 + 1 + 1):(M * K + K * Nu + M + 1 + K + (K * (K + 1)) / 2 + 1 + M * K)]
+  Rho <- RawSamples[, (M * K + K * Nu + M + 1 + K + (K * (K + 1)) / 2 + 1 + M * K + 1), drop = FALSE]
   colnames(Lambda) <- as.character(t(apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Lambda", 1:M, "_"), x))))
   colnames(Eta) <- as.character((apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Eta", 1:Nu, "_"), x))))
   colnames(Sigma2) <- paste0("Sigma2_", 1:M)
@@ -27,7 +28,8 @@ FormatSamples <- function(DatObj, RawSamples) {
   colnames(Upsilon) <- apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Lambda", 1:K, "_"), x))[UpsilonInd[order(UpsilonInd[, 1]), ]]
   colnames(Psi) <- "Psi"
   colnames(Xi) <- as.character(t(apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Xi", 1:M, "_"), x))))
-  Out <- list(Lambda = Lambda, Eta = Eta, Sigma2 = Sigma2, Kappa2 = Kappa2, Delta = Delta, Tau = Tau, Upsilon = Upsilon, Psi = Psi, Xi = Xi)
+  colnames(Rho) <- "Rho"
+  Out <- list(Lambda = Lambda, Eta = Eta, Sigma2 = Sigma2, Kappa2 = Kappa2, Delta = Delta, Tau = Tau, Upsilon = Upsilon, Psi = Psi, Xi = Xi, Rho = Rho)
   return(Out)
 }
 
@@ -86,7 +88,7 @@ OutputDatAug <- function(DatAug) {
 SummarizeMetropolis <- function(DatObj, MetrObj, MetropRcpp, McmcObj) {
 
   ###Set data object
-  M <- DatObj$M
+  SpCorInd <- DatObj$SpCorInd
 
   ###Set MCMC object
   NSims <- McmcObj$NSims
@@ -94,13 +96,24 @@ SummarizeMetropolis <- function(DatObj, MetrObj, MetropRcpp, McmcObj) {
   ###Set Metropolis objects
   MetropPsi <- MetropRcpp$MetropPsi
   AcceptancePsi <- MetropRcpp$AcceptancePsi
-  OriginalTuners <- MetrObj$OriginalTuners
-
-  ###Summarize and output
+  OriginalTuners <- MetrObj$OriginalTuners[1]
   AcceptancePct <- AcceptancePsi / NSims
   MetrSummary <- cbind(AcceptancePct, MetropPsi, OriginalTuners)
   rownames(MetrSummary) <- "Psi"
   colnames(MetrSummary) <- c("Acceptance", "PilotAdaptedTuners", "OriginalTuners")
+  
+  ###Add Rho
+  if (SpCorInd == 0) {
+    MetropRho <- MetropRcpp$MetropRho
+    AcceptanceRho <- MetropRcpp$AcceptanceRho
+    OriginalTuners <- MetrObj$OriginalTuners
+    AcceptancePct <- c(AcceptancePsi, AcceptanceRho) / NSims
+    MetrSummary <- cbind(AcceptancePct, c(MetropPsi, MetropRho), OriginalTuners)
+    rownames(MetrSummary) <- c("Psi", "Rho")
+    colnames(MetrSummary) <- c("Acceptance", "PilotAdaptedTuners", "OriginalTuners")
+  }
+
+  ###Summarize and output
   return(MetrSummary)
 
 }

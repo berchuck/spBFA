@@ -1,3 +1,7 @@
+#' spBFA
+#'
+#' \code{spBFA} is a package for Bayesian spatial factor analysis.
+#' 
 #' @author Samuel I. Berchuck \email{sib2@duke.edu}
 #'
 #' @name spBFA

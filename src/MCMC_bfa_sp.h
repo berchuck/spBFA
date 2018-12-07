@@ -13,7 +13,6 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   
 //STRUCT DEFINITIONS
 struct datobj {
-  double Rho;
   double ScaleY;
   int N;
   int M;
@@ -22,19 +21,20 @@ struct datobj {
   int L;
   int FamilyInd;
   int TempCorInd;
+  int SpCorInd;
+  int LInf;
   arma::colvec YStar;
   arma::colvec YObserved;
   arma::mat YStarWide;
-  arma::Mat<int> W;
+  arma::mat SpDist;
   arma::colvec Time;
-  arma::mat ICAR;
-  arma::mat ICARInv;
   arma::mat TimeDist;
   arma::mat EyeNu;
   arma::Col<int> SeqL;
   arma::mat EyeM;
   arma::mat EyeKbyNu;
   arma::colvec ZeroKbyNu;
+  arma::colvec ZeroM;
   arma::colvec OneNu;
 };
 struct hypara {
@@ -46,6 +46,8 @@ struct hypara {
   double A2;
   double APsi;
   double BPsi;
+  double ARho;
+  double BRho;
   double Gamma;
   double Beta;
   double Zeta;
@@ -53,14 +55,17 @@ struct hypara {
 };
 struct metrobj {
   double MetropPsi;
+  double MetropRho;
+  int AcceptanceRho;
   int AcceptancePsi;
-  double OriginalTuners;
+  arma::vec OriginalTuners;
 };
 struct para {
   arma::colvec Sigma2;
-  double Kappa2;
   arma::colvec Delta;
+  double Kappa2;
   double Psi;
+  double Rho;
   arma::mat Upsilon;
   arma::mat UpsilonInv;
   arma::umat Xi;
@@ -80,6 +85,11 @@ struct para {
   arma::colvec Mean;
   arma::cube Weights;
   arma::cube logWeights;
+  arma::mat U;
+  arma::colvec LStarJ;
+  arma::mat SpCov;
+  arma::mat SpCovInv;
+  arma::mat CholSpCov;
 };
 struct dataug {
   int NBelow;
@@ -106,7 +116,8 @@ struct mcmcobj {
 
 //COVARIANCE FUNCTIONS
 arma::mat H(double Psi, int TempCorInd, arma::mat const& TimeDist, int Nu);
-  
+arma::mat SpEXP(double Rho, arma::mat const& SpDist, int M);
+
 //DISTRIBUTION FUNCTIONS
 arma::vec rnormRcpp(int n, double mean, double sd);
 arma::vec sampleRcpp(arma::Col<int> const& x, int size, bool replace, arma::vec const& prob);
@@ -146,11 +157,13 @@ para SampleSigma2(datobj DatObj, para Para, hypara HyPara);
 arma::colvec SampleProbit(datobj DatObj, para Para, dataug DatAug);
 arma::colvec SampleTobit(datobj DatObj, para Para, dataug DatAug);
 datobj SampleY(datobj DatObj, para Para, dataug DatAug);
-
+para SampleU(datobj DatObj, para Para);
+std::pair<para, metrobj> SampleRho(datobj DatObj, para Para, hypara HyPara, metrobj MetrObj);
+  
 //MCMC UTILITY FUNCTIONS
 void BeginBurnInProgress(mcmcobj McmcObj, bool Interactive);
-Rcpp::List OutputMetrObj(metrobj MetrObj);
-metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj);
+Rcpp::List OutputMetrObj(metrobj MetrObj, datobj DatObj);
+metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj, datobj DatObj);
 void SamplerProgress(int s, mcmcobj McmcObj);
 arma::colvec StoreSamples(datobj DatObj, para Para);
 void UpdateBurnInBar(int s, mcmcobj McmcObj);
@@ -163,5 +176,6 @@ arma::mat GetLambda(arma::mat const& Theta, arma::umat const& Xi, int K, int M);
 arma::cube GetlogWeights(arma::cube const& Alpha, int K, int M, int L);
 arma::cube GetWeights(arma::cube const& Alpha, int K, int M, int L);
 bool rows_equal(arma::mat const& lhs, arma::mat const& rhs, double tol);
+arma::colvec GetLStarJ(arma::mat const& U, arma::cube const& Weights, int K, int M);
 
 #endif // __spBFA__

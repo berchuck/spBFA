@@ -38,8 +38,11 @@ double PilotAdaptFunc(double TuningParameter, double AcceptancePct) {
 
 
 //Function for implementing pilot adaptation in MCMC sampler--------------------------------------------
-metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj) {
+metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj, datobj DatObj) {
 
+  //Set Data objects
+  int SpCorInd = DatObj.SpCorInd;
+  
   //Set Metropolis objects
   double MetropPsi = MetrObj.MetropPsi;
   double AcceptancePsi = MetrObj.AcceptancePsi;
@@ -49,14 +52,25 @@ metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj) {
 
   //Get acceptance percentages
   double PctPsi = AcceptancePsi / double(PilotAdaptDenominator);
-
+  
   //Update Tuning Parameter
   MetropPsi = PilotAdaptFunc(MetropPsi, PctPsi);
   MetrObj.MetropPsi = MetropPsi;
-
+  
   //Zero the acceptance counters
   AcceptancePsi = 0;
   MetrObj.AcceptancePsi = AcceptancePsi;
+  
+  //Update Rho
+  if (SpCorInd == 0) {
+    double MetropRho = MetrObj.MetropRho;
+    double AcceptanceRho = MetrObj.AcceptanceRho;
+    double PctRho = AcceptanceRho / double(PilotAdaptDenominator);
+    MetropRho = PilotAdaptFunc(MetropRho, PctRho);
+    MetrObj.MetropRho = MetropRho;
+    AcceptanceRho = 0;
+    MetrObj.AcceptanceRho = AcceptanceRho;
+  }  
   return MetrObj;
 
 }
@@ -64,10 +78,15 @@ metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj) {
 
 
 //Output Metropolis object for summary-------------------------------------------------------------------
-Rcpp::List OutputMetrObj(metrobj MetrObj) {
+Rcpp::List OutputMetrObj(metrobj MetrObj, datobj DatObj) {
 
-  Rcpp::List Out = Rcpp::List::create(Rcpp::Named("AcceptancePsi") = MetrObj.AcceptancePsi,
-                                      Rcpp::Named("MetropPsi") = MetrObj.MetropPsi);
+  Rcpp::List Out;
+  if (DatObj.SpCorInd == 1) Out = Rcpp::List::create(Rcpp::Named("AcceptancePsi") = MetrObj.AcceptancePsi,
+                                                     Rcpp::Named("MetropPsi") = MetrObj.MetropPsi);
+  if (DatObj.SpCorInd == 0) Out = Rcpp::List::create(Rcpp::Named("AcceptancePsi") = MetrObj.AcceptancePsi,
+                                                     Rcpp::Named("MetropPsi") = MetrObj.MetropPsi,
+                                                     Rcpp::Named("AcceptanceRho") = MetrObj.AcceptanceRho,
+                                                     Rcpp::Named("MetropRho") = MetrObj.MetropRho);
   return Out;
 
 }
@@ -83,7 +102,8 @@ void SamplerProgress(int s, mcmcobj McmcObj) {
 
   //Add a new percentage
   Rcpp::Rcout.precision(0);
-  Rcpp::Rcout << std::fixed << 100 * (s - NBurn) / NSims << "%..  ";
+  if (s < NSims + NBurn)Rcpp::Rcout << std::fixed << 100 * (s - NBurn) / NSims << "%.. ";
+  if (s == NSims + NBurn) Rcpp::Rcout << std::fixed << 100 * (s - NBurn) / NSims << "%!";
 
 }
 
@@ -106,10 +126,11 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   arma::mat Upsilon = Para.Upsilon;
   double Psi = Para.Psi;
   arma::umat Xi = Para.Xi;
-
+  double Rho = Para.Rho;
+  
   //Save raw samples
   int counter = 0;
-  arma::colvec col(M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K);
+  arma::colvec col(M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K + 1);
   for (arma::uword i = 0; i < M; i++) {
     for (arma::uword j = 0; j < K; j++) {
       col(counter) = Lambda(i, j);
@@ -146,6 +167,7 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
       counter++;
     }
   }
+  col(counter) = Rho;
   return col;
 }
 
@@ -183,16 +205,16 @@ void UpdateBurnInBarInt(int s, mcmcobj McmcObj) {
 
   //Add percentage to submited job mode
   Rcpp::Rcout.precision(0);
-  if (NewStar == 0) Rcpp::Rcout << std::fixed << "10%..  ";
-  if (NewStar == 1) Rcpp::Rcout << std::fixed << "20%..  ";
-  if (NewStar == 2) Rcpp::Rcout << std::fixed << "30%..  ";
-  if (NewStar == 3) Rcpp::Rcout << std::fixed << "40%..  ";
-  if (NewStar == 4) Rcpp::Rcout << std::fixed << "50%..  ";
-  if (NewStar == 5) Rcpp::Rcout << std::fixed << "60%..  ";
-  if (NewStar == 6) Rcpp::Rcout << std::fixed << "70%..  ";
-  if (NewStar == 7) Rcpp::Rcout << std::fixed << "80%..  ";
-  if (NewStar == 8) Rcpp::Rcout << std::fixed << "90%..  ";
-  if (NewStar == 9) Rcpp::Rcout << std::fixed << "100%!  ";
+  if (NewStar == 0) Rcpp::Rcout << std::fixed << "10%.. ";
+  if (NewStar == 1) Rcpp::Rcout << std::fixed << "20%.. ";
+  if (NewStar == 2) Rcpp::Rcout << std::fixed << "30%.. ";
+  if (NewStar == 3) Rcpp::Rcout << std::fixed << "40%.. ";
+  if (NewStar == 4) Rcpp::Rcout << std::fixed << "50%.. ";
+  if (NewStar == 5) Rcpp::Rcout << std::fixed << "60%.. ";
+  if (NewStar == 6) Rcpp::Rcout << std::fixed << "70%.. ";
+  if (NewStar == 7) Rcpp::Rcout << std::fixed << "80%.. ";
+  if (NewStar == 8) Rcpp::Rcout << std::fixed << "90%.. ";
+  if (NewStar == 9) Rcpp::Rcout << std::fixed << "100%!";
 
 }
 

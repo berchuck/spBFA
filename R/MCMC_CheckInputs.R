@@ -1,8 +1,8 @@
-CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, Rho, ScaleY) {
+CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, SpatialStructure, ScaleY) {
   
   ###Data dimensions
   N <- length(Y)
-  M <- dim(W)[1]
+  M <- dim(Dist)[1]
   Nu <- length(Time)
 
   ###Family
@@ -10,14 +10,10 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
 
   ###Temporal correlation
   if (!TemporalStructure %in% c("ar1", "exponential")) stop('TemporalStructure: must be one of "ar1" or "exponential"')
-  
-  ###Rho
-  if (missing(Rho)) stop("Rho: missing")
-  if (!is.scalar(Rho)) stop('Rho must be a scalar')
-  if (is.na(Rho)) stop('Rho cannot be NA')
-  if (!is.finite(Rho)) stop('Rho cannot be infinite')
-  if (!((Rho < 1) & (Rho > 0))) stop('Rho must be in (0, 1)')
 
+  ###Spatial correlation
+  if (!SpatialStructure %in% c("discrete", "continuous")) stop('SpatialStructure: must be one of "discrete" or "continuous"')
+  
   ###ScaleY
   if (missing(ScaleY)) stop("ScaleY: missing")
   if (!is.scalar(ScaleY)) stop('ScaleY must be a scalar')
@@ -33,14 +29,16 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
   if ((Family == "probit") & ((sum(Y == 1) + sum(Y == 0)) != N)) stop('Y: for "probit" observed data must be binary')
   if ((Family == "tobit") & (any(Y < 0))) stop('Y: for "tobit" observed data must be non-negative')
 
-  ###Data checks for W
-  if (!is.matrix(W)) stop('W must be a matrix')
-  if (!dim(W)[1] == M) stop(paste0('W must be a ', M ,' x ', M, ' dimensional matrix'))
-  if (!dim(W)[2] == M) stop('W must be square')
-  if (sum(!((W) == t(W))) > 0) stop('W must be symmetric')
-  if (length(table(W)) > 2) stop('W must only contain binaries (i.e. 0\'s or 1\'s)')
-  if (any(diag(W) != 0)) stop('W must have only zeros on the diagonal')
-
+  ###Data checks for Dist
+  if (!is.matrix(Dist)) stop('Dist must be a matrix')
+  if (!dim(Dist)[1] == M) stop(paste0('Dist must be a ', M ,' x ', M, ' dimensional matrix'))
+  if (!dim(Dist)[2] == M) stop('Dist must be square')
+  if (sum(!((Dist) == t(Dist))) > 0) stop('Dist must be symmetric')
+  if (any(diag(Dist) != 0)) stop('Dist must have only zeros on the diagonal')
+  if (!all(!is.na(Dist))) stop('Dist cannot have missing values')
+  if (!all(is.finite(Dist))) stop('Dist cannot have infinite values')
+  if (SpatialStructure == "discrete") if (length(table(Dist)) > 2) stop('Dist must only contain binaries (i.e. 0\'s or 1\'s)')
+  
   ###Data checks for Time
   if (!is.numeric(Time)) stop('Time must be a vector')
   if (length(Time) != Nu) stop(paste0('Time must have length ', Nu))
@@ -57,11 +55,9 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
   if (!is.wholenumber(K) | K <= 0) stop('K must be a strictly positive integer')
 
   ###Data checks for L
-  if (missing(L)) stop("L: missing")
-  if (!is.scalar(L)) stop('L must be a scalar')
+  if (!is.scalar(L) & !is.infinite(L)) stop('L must be a scalar or Inf')
   if (is.na(L)) stop('L cannot be NA')
-  if (!is.finite(L)) stop('L cannot be infinite')
-  if (!is.wholenumber(L) | L <= 0) stop('L must be a strictly positive integer')
+  if (is.finite(L)) if (!is.wholenumber(L) | L <= 0) stop('L as a scalar must be a strictly positive integer')
   
   ###Verify dimensions
   if ((N / M) != Nu) stop('Time and Y have contradictory dimensions')
@@ -69,7 +65,7 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
   ###Hypers
   if (!is.null(Hypers)) {
     if (!is.list(Hypers)) stop('Hypers must be a list')
-    if (!all(names(Hypers) %in% c("Sigma2", "Kappa2", "Delta", "Psi", "Upsilon"))) stop('Hypers: Can only contain lists with names "Sigma2", "Kappa2" and "Delta", "Psi", or "Upsilon"')
+    if (!all(names(Hypers) %in% c("Sigma2", "Kappa2", "Rho", "Delta", "Psi", "Upsilon"))) stop('Hypers: Can only contain lists with names "Sigma2", "Kappa2" and "Delta", "Psi", or "Upsilon"')
 
     ###If Sigma2 hyperparameters are provided
     if ("Sigma2" %in% names(Hypers)) {
@@ -99,6 +95,25 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
       if (is.na(Hypers$Kappa2$D)) stop('Hypers: "D" cannot be NA')
       if (!is.finite(Hypers$Kappa2$D)) stop('Hypers: "D" cannot be infinite')
       if (Hypers$Kappa2$D <= 0) stop('Hypers: "D" must be strictly positive')
+    }
+
+    ###If Rho hyperparameters are provided
+    if ("Rho" %in% names(Hypers)) {
+      if (SpatialStructure == "discrete") if (!is.null(NULL)) stop('Hypers: When SpatialStructure = "discrete", "Rho" must be NULL')
+      if (SpatialStructure == "continuous") {
+        if (!is.list(Hypers$Rho)) stop('Hypers: "Rho" must be a list')
+        if (!"ARho" %in% names(Hypers$Rho)) stop('Hypers: "ARho" value missing')
+        if (!is.scalar(Hypers$Rho$ARho)) stop('Hypers: "ARho" must be a scalar')
+        if (is.na(Hypers$Rho$ARho)) stop('Hypers: "ARho" cannot be NA')
+        if (!is.finite(Hypers$Rho$ARho)) stop('Hypers: "ARho" cannot be infinite')
+        if (Hypers$Rho$ARho <= 0) stop('Hypers: "ARho" must be strictly positive')
+        if (!"BRho" %in% names(Hypers$Rho)) stop('Hypers: "BRho" value missing')
+        if (!is.scalar(Hypers$Rho$BRho)) stop('Hypers: "BRho" must be a scalar')
+        if (is.na(Hypers$Rho$BRho)) stop('Hypers: "BRho" cannot be NA')
+        if (!is.finite(Hypers$Rho$BRho)) stop('Hypers: "BRho" cannot be infinite')
+        if (Hypers$Rho$BRho <= 0) stop('Hypers: "BRho" must be strictly positive')
+        if (Hypers$Rho$BRho < Hypers$Rho$ARho) stop('Hypers: "BRho" must be greater than "ARho"')
+      }
     }
     
     ###If Delta hyperparameters are provided
@@ -181,7 +196,7 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
   ###Starting Values
   if (!is.null(Starting)) {
     if (!is.list(Starting)) stop('Starting must be a list')
-    if (!all(names(Starting) %in% c("Sigma2", "Kappa2", "Delta", "Psi", "Upsilon"))) stop('Starting: Can only contain objects with names "Sigma2", "Kappa2", "Delta", "Psi", and "Upsilon"')
+    if (!all(names(Starting) %in% c("Sigma2", "Kappa2", "Rho", "Delta", "Psi", "Upsilon"))) stop('Starting: Can only contain objects with names "Sigma2", "Kappa2", "Rho", "Delta", "Psi", and "Upsilon"')
 
     ###If Delta starting values is provided
     if ("Delta" %in% names(Starting)) {
@@ -207,6 +222,22 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
       if (Starting$Kappa2 <= 0) stop('Starting: "Kappa2" must be strictly positive')
     }
 
+    ###If Rho starting values is provided
+    if ("Rho" %in% names(Starting)) {
+      if (SpatialStructure == "discrete") {
+        if (!is.scalar(Starting$Rho)) stop('Starting: "Rho" must be a scalar')
+        if (is.na(Starting$Rho)) stop('Starting: "Rho" cannot be NA')
+        if (!is.finite(Starting$Rho)) stop('Starting: "Rho" cannot be infinite')
+        if ((Starting$Rho <= 0) | (Starting$Rho >= 1)) stop('Starting: "Rho" must be in (0, 1)')
+      }
+      if (SpatialStructure == "continuous") {
+        if (!is.scalar(Starting$Rho)) stop('Starting: "Rho" must be a scalar')
+        if (is.na(Starting$Rho)) stop('Starting: "Rho" cannot be NA')
+        if (!is.finite(Starting$Rho)) stop('Starting: "Rho" cannot be infinite')
+        # I make sure that Rho is in (ARho, BRho) in CreatePara();
+      }
+    }
+    
     ###If Upsilon starting values is provided
     if ("Upsilon" %in% names(Starting)) {
       if (!is.matrix(Starting$Upsilon)) stop('Starting: "Upsilon" must be a matrix')
@@ -232,7 +263,7 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
   ###Tuning Values
   if (!is.null(Tuning)) {
     if (!is.list(Tuning)) stop('Tuning must be a list')
-    if (!all(names(Tuning) %in% c("Psi"))) stop('Tuning: Can only contain objects with names "Psi"')
+    if (!all(names(Tuning) %in% c("Psi", "Rho"))) stop('Tuning: Can only contain objects with names "Psi", "Rho"')
 
     ###If Psi tuning value is provided
     if ("Psi" %in% names(Tuning)) {
@@ -240,6 +271,19 @@ CheckInputs <- function(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family
       if (is.na(Tuning$Psi)) stop('Tuning: "Psi" cannot be NA')
       if (!is.finite(Tuning$Psi)) stop('Tuning: "Psi" cannot be infinite')
       if (Tuning$Psi < 0) stop('Tuning: "Psi" must be non-negative')
+    }
+
+    ###If Rho tuning value is provided
+    if ("Rho" %in% names(Tuning)) {
+      if (SpatialStructure == "discrete") {
+        if (!is.null(Tuning$Rho)) stop('Tuning: No tuning is needed for "Rho" when "SpatialStructure" is discrete')
+      }
+      if (SpatialStructure == "continuous") {
+        if (!is.scalar(Tuning$Rho)) stop('Tuning: "Rho" must be a scalar')
+        if (is.na(Tuning$Rho)) stop('Tuning: "Rho" cannot be NA')
+        if (!is.finite(Tuning$Rho)) stop('Tuning: "Rho" cannot be infinite')
+        if (Tuning$Rho < 0) stop('Tuning: "Rho" must be non-negative')
+      }
     }
 
   ###End Tuning Values

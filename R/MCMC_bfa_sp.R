@@ -152,36 +152,35 @@
 # @author Samuel I. Berchuck
 #' @references Reference for Berchuck et al. 2018 is forthcoming.
 #' @export
-bfa_sp <- function(Y, W, Time, K, L,
-                   Starting = NULL, Hypers = NULL, Tuning = NULL, MCMC = NULL,
-                   Family = "tobit", TemporalStructure = "exponential", 
-                   Rho = 0.99, ScaleY = 10, Seed = 54) {
-
+bfa_sp <- function(Y, Dist, Time, K, L = Inf, 
+                   Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, 
+                   ScaleY = 1, Family = "normal", Seed = 54, 
+                   TemporalStructure = "exponential", SpatialStructure = "discrete") {
+  
   ###Function Inputs
   # Y = Y
-  # W = W
+  # Dist = SpDist
   # Time = Time
   # Starting = Starting
   # Hypers = Hypers
   # Tuning = Tuning
   # MCMC = MCMC
-  # Family = "tobit"
+  # Family = "normal"
   # TemporalStructure = "exponential"
-  # Rho = 0.99
+  # SpatialStructure = "continuous"
   # ScaleY = 1
   # Seed = 54
   # K = K
-  # L = L
-
+  # L = Inf
+  
   ###Check for missing objects
   if (missing(Y)) stop("Y: missing")
-  if (missing(W)) stop("W: missing")
+  if (missing(Dist)) stop("Dist: missing")
   if (missing(Time)) stop("Time: missing")
   if (missing(K)) stop("K: missing")
-  if (missing(L)) stop("L: missing")
-  
+
   ###Check model inputs
-  CheckInputs(Y, W, Time, K, L, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, Rho, ScaleY)
+  CheckInputs(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, SpatialStructure, ScaleY)
 
   ####Set seed for reproducibility
   set.seed(Seed)
@@ -190,9 +189,9 @@ bfa_sp <- function(Y, W, Time, K, L,
   Interactive <- interactive()
 
   ###Create objects for use in sampler
-  DatObj <- CreateDatObj(Y, W, Time, K, L, Rho, ScaleY, Family, TemporalStructure)
+  DatObj <- CreateDatObj(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure, SpatialStructure)
   HyPara <- CreateHyPara(Hypers, DatObj)
-  MetrObj <- CreateMetrObj(Tuning)
+  MetrObj <- CreateMetrObj(Tuning, DatObj)
   Para <- CreatePara(Starting, DatObj, HyPara)
   DatAug <- CreateDatAug(DatObj)
   McmcObj <- CreateMcmc(MCMC, DatObj)
@@ -228,10 +227,11 @@ bfa_sp <- function(Y, W, Time, K, L,
                 upsilon = Samples$Upsilon,
                 psi = Samples$Psi,
                 xi = Samples$Xi,
+                rho = Samples$Rho,
                 metropolis = Metropolis,
                 datobj = DatObjOut,
                 dataug = DatAugOut,
-                runtime = paste0("Model runtime: ",round(RunTime, 2), " ",attr(RunTime, "units")))
+                runtime = paste0("Model runtime: ",round(RunTime, 2), " ", attr(RunTime, "units")))
   spBFA <- structure(spBFA, class = "spBFA")
   return(spBFA)
 

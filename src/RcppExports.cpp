@@ -32,6 +32,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// SpEXP
+arma::mat SpEXP(double Rho, arma::mat const& SpDist, int M);
+RcppExport SEXP _spBFA_SpEXP(SEXP RhoSEXP, SEXP SpDistSEXP, SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type Rho(RhoSEXP);
+    Rcpp::traits::input_parameter< arma::mat const& >::type SpDist(SpDistSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(SpEXP(Rho, SpDist, M));
+    return rcpp_result_gen;
+END_RCPP
+}
 // bfa_sp_Rcpp
 Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List, Rcpp::List HyPara_List, Rcpp::List MetrObj_List, Rcpp::List Para_List, Rcpp::List DatAug_List, Rcpp::List McmcObj_List, arma::mat RawSamples, bool Interactive);
 RcppExport SEXP _spBFA_bfa_sp_Rcpp(SEXP DatObj_ListSEXP, SEXP HyPara_ListSEXP, SEXP MetrObj_ListSEXP, SEXP Para_ListSEXP, SEXP DatAug_ListSEXP, SEXP McmcObj_ListSEXP, SEXP RawSamplesSEXP, SEXP InteractiveSEXP) {
@@ -51,12 +64,28 @@ BEGIN_RCPP
 END_RCPP
 }
 // Play
-void Play();
-RcppExport SEXP _spBFA_Play() {
+bool Play(arma::vec X);
+RcppExport SEXP _spBFA_Play(SEXP XSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Play();
-    return R_NilValue;
+    Rcpp::traits::input_parameter< arma::vec >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(Play(X));
+    return rcpp_result_gen;
+END_RCPP
+}
+// GetLStarJ
+arma::colvec GetLStarJ(arma::mat const& U, arma::cube const& Weights, int K, int M);
+RcppExport SEXP _spBFA_GetLStarJ(SEXP USEXP, SEXP WeightsSEXP, SEXP KSEXP, SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat const& >::type U(USEXP);
+    Rcpp::traits::input_parameter< arma::cube const& >::type Weights(WeightsSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetLStarJ(U, Weights, K, M));
+    return rcpp_result_gen;
 END_RCPP
 }
 // GetLambda
@@ -138,8 +167,10 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_GetRooti", (DL_FUNC) &_spBFA_GetRooti, 2},
     {"_spBFA_H", (DL_FUNC) &_spBFA_H, 4},
+    {"_spBFA_SpEXP", (DL_FUNC) &_spBFA_SpEXP, 3},
     {"_spBFA_bfa_sp_Rcpp", (DL_FUNC) &_spBFA_bfa_sp_Rcpp, 8},
-    {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 0},
+    {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 1},
+    {"_spBFA_GetLStarJ", (DL_FUNC) &_spBFA_GetLStarJ, 4},
     {"_spBFA_GetLambda", (DL_FUNC) &_spBFA_GetLambda, 4},
     {"_spBFA_GetWeights", (DL_FUNC) &_spBFA_GetWeights, 4},
     {"_spBFA_GetlogWeights", (DL_FUNC) &_spBFA_GetlogWeights, 4},

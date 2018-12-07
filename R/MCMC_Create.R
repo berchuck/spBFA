@@ -1,21 +1,26 @@
 ###Function for reading in sampler inputs and creating a list object that contains all relavent data objects--------------------
-CreateDatObj <- function(Y, W, Time, K, L, Rho, ScaleY, Family, TemporalStructure) {
+CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure, SpatialStructure) {
 
   ###Data objects
   YObserved <- Y / ScaleY #scale observed data
   N <- length(YObserved)  #total observations
-  M <- dim(W)[1] #number of spatial locations
+  M <- dim(Dist)[1] #number of spatial locations
   Nu <- N / M #number of visits
 
+  ###Upper bound of L
+  if (is.finite(L)) {
+    L <- L
+    LInf <- 0
+  }
+  if (is.infinite(L)) {
+    L <- M
+    LInf <- 1
+  }
+  
   ###Dynamic Objects (updated with data augmentation)
   YStar <- matrix(YObserved, ncol = 1)
   YStarWide <- matrix(YStar, nrow = M, ncol = Nu)
 
-  ###CAR covariance objects
-  Dw <- diag(apply(W, 1, sum))
-  ICAR <- Dw - Rho * W
-  ICARInv <- CholInv(ICAR)
-  
   ###Temporal distance matrix
   TimeDist <- abs(outer(Time, Time, "-"))
   
@@ -25,11 +30,16 @@ CreateDatObj <- function(Y, W, Time, K, L, Rho, ScaleY, Family, TemporalStructur
   SeqL <- matrix(0:(L - 1), ncol = 1)
   EyeKbyNu <- diag(K * Nu)
   ZeroKbyNu <- matrix(0, nrow = K * Nu)
+  ZeroM <- matrix(0, nrow = M)
   OneNu <- matrix(1, nrow = Nu)
   
   ###Assign temporal correlation structure
   if (TemporalStructure == "exponential") TempCorInd <- 0
   if (TemporalStructure == "ar1") TempCorInd <- 1
+
+  ###Assign spatial correlation structure
+  if (SpatialStructure == "continuous") SpCorInd <- 0
+  if (SpatialStructure == "discrete") SpCorInd <- 1
   
   ###Family indicator
   if (Family == "normal") FamilyInd <- 0
@@ -42,7 +52,7 @@ CreateDatObj <- function(Y, W, Time, K, L, Rho, ScaleY, Family, TemporalStructur
   DatObj$ScaleY <- ScaleY
   DatObj$YStar <- YStar
   DatObj$YStarWide <- YStarWide
-  DatObj$W <- W
+  DatObj$SpDist <- Dist
   DatObj$N <- N
   DatObj$M <- M
   DatObj$Nu <- Nu
@@ -50,17 +60,17 @@ CreateDatObj <- function(Y, W, Time, K, L, Rho, ScaleY, Family, TemporalStructur
   DatObj$L <- L
   DatObj$FamilyInd <- FamilyInd
   DatObj$Time <- Time
-  DatObj$Rho <- Rho
-  DatObj$ICAR <- ICAR
-  DatObj$ICARInv <- ICARInv
   DatObj$TempCorInd <- TempCorInd
+  DatObj$SpCorInd <- SpCorInd
   DatObj$TimeDist <- TimeDist
   DatObj$EyeNu <- EyeNu
   DatObj$SeqL <- SeqL
   DatObj$EyeM <- EyeM
   DatObj$EyeKbyNu <- EyeKbyNu
   DatObj$ZeroKbyNu <- ZeroKbyNu
+  DatObj$ZeroM <- ZeroM
   DatObj$OneNu <- OneNu
+  DatObj$LInf <- LInf
   return(DatObj)
 
 }
@@ -74,7 +84,9 @@ CreateHyPara <- function(Hypers, DatObj) {
   ###Set data objects
   K <- DatObj$K
   TempCorInd <- DatObj$TempCorInd
+  SpCorInd <- DatObj$SpCorInd
   TimeDist <- DatObj$TimeDist 
+  SpDist <- DatObj$SpDist
   
   ###Which parameters are user defined?
   UserHypers <- names(Hypers)
@@ -99,6 +111,30 @@ CreateHyPara <- function(Hypers, DatObj) {
     D <- 1
   }
 
+  ###Set hyperparameters for Rho
+  if ("Rho" %in% UserHypers) {
+    if (SpCorInd == 0) { # continuous
+      APsi <- Hypers$Rho$ARho
+      BPsi <- Hypers$Rho$BRho
+    }
+    if (SpCorInd == 1) { # discrete
+      ARho <- 0 #null values, because Rho is fixed
+      BRho <- 1
+    }
+  }
+  if (!"Rho" %in% UserHypers) {
+    if (SpCorInd == 0) { # continuous
+      minDiff <- min(SpDist[SpDist > 0])
+      maxDiff <- max(SpDist[SpDist > 0])
+      ARho <- -log(0.95) / maxDiff #longest diff goes up to 95%
+      BRho <- -log(0.01) / minDiff #shortest diff goes down to 1%
+    }
+    if (SpCorInd == 1) { # discrete
+      APsi <- 0 #null values, because Rho is fixed
+      BPsi <- 1
+    }
+  }
+  
   ###Set hyperparameters for Delta
   if ("Delta" %in% UserHypers) {
     A1 <- Hypers$Delta$A1
@@ -165,6 +201,8 @@ CreateHyPara <- function(Hypers, DatObj) {
   HyPara$Beta <- Beta
   HyPara$Zeta <- Zeta
   HyPara$Omega <- Omega
+  HyPara$ARho <- ARho
+  HyPara$BRho <- BRho
   return(HyPara)
 
 }
@@ -172,8 +210,11 @@ CreateHyPara <- function(Hypers, DatObj) {
 
 
 ###Function for creating an object containing relevant Metropolis information---------------------------------------------------
-CreateMetrObj <- function(Tuning) {
+CreateMetrObj <- function(Tuning, DatObj) {
 
+  ###Set data objects
+  SpCorInd <- DatObj$SpCorInd
+  
   ###Which parameters are user defined?
   UserTuners <- names(Tuning)
 
@@ -181,14 +222,25 @@ CreateMetrObj <- function(Tuning) {
   if ("Psi" %in% UserTuners) MetropPsi <- Tuning$Psi
   if (!("Psi" %in% UserTuners)) MetropPsi <- 1
 
+  ###Set tuning parameters for Rho
+  if ("Rho" %in% UserTuners) {
+    if (SpCorInd == 0) MetropRho <- Tuning$Rho # continuous
+    if (SpCorInd == 1) MetropRho <- 1 # null value
+  }
+  if (!("Rho" %in% UserTuners)) {
+    MetropRho <- 1
+  }
+  
   ###Set acceptance rate counters
-  AcceptancePsi <- 0
+  AcceptancePsi <- AcceptanceRho <- 0
 
   ###Return metropolis object
   MetrObj <- list()
   MetrObj$MetropPsi <- MetropPsi
   MetrObj$AcceptancePsi <- AcceptancePsi
-  MetrObj$OriginalTuners <- MetropPsi
+  MetrObj$MetropRho <- MetropRho
+  MetrObj$AcceptanceRho <- AcceptanceRho
+  MetrObj$OriginalTuners <- c(MetropPsi, MetropRho)
   return(MetrObj)
 
 }
@@ -206,10 +258,14 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   TempCorInd <- DatObj$TempCorInd
   TimeDist <- DatObj$TimeDist
   EyeNu <- DatObj$EyeNu
+  SpCorInd <- DatObj$SpCorInd
+  SpDist <- DatObj$SpDist
   
   ###Set hyperparameter objects
   APsi <- HyPara$APsi
   BPsi <- HyPara$BPsi
+  ARho <- HyPara$ARho
+  BRho <- HyPara$BRho
   
   ###Which parameters are user defined?
   UserStarters <- names(Starting)
@@ -221,6 +277,25 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   ###Set initial values of Kappa2
   if ("Kappa2" %in% UserStarters) Kappa2 <- Starting$Kappa2
   if ((!"Kappa2" %in% UserStarters)) Kappa2 <- 1
+  
+  ###Set initial values of Rho
+  if ("Rho" %in% UserStarters) {
+    if (SpCorInd == 0) { #continuous
+      Rho <- Starting$Rho
+      if ((Rho <= ARho) | (Rho >= BRho)) stop('Starting: "Rho" must be in (ARho, BRho)')
+    }
+    if (SpCorInd == 1) { #discrete
+      Rho <- Starting$Rho
+    }
+  }
+  if ((!"Rho" %in% UserStarters)) {
+    if (SpCorInd == 0) { #continuous
+      Rho <- mean(c(ARho, BRho))
+    }
+    if (SpCorInd == 1) { #discrete
+      Rho <- 0.99
+    }
+  }
   
   ###Set initial values of Delta
   if ("Delta" %in% UserStarters) Delta <- matrix(Starting$Delta, nrow = K, ncol = 1)
@@ -288,6 +363,22 @@ CreatePara <- function(Starting, DatObj, HyPara) {
     }
   }
 
+  ###Slice sampling latent parameter
+  U <- matrix(nrow = M, ncol = K)
+  for (j in 1:K) for (i in 1:M) U[i, j] <- runif(1, 0, Weights[Xi[i, j] + 1, i, j])
+  
+  ###Upper Bounds for latent sampling
+  OneMinusUStar <- 1 - apply(U, 2, min)
+  LStarJ <- numeric(K)
+  for (j in 1:K) {
+    LStarIJ <- numeric(M)
+    for (i in 1:M) {
+      LStarIJ[i] <- which.max(cumsum(Weights[ , i, j]) > OneMinusUStar[j]) - 1
+    }
+    LStarJ[j] <- max(LStarIJ)
+  }
+  LStarJ <- matrix(LStarJ, ncol = 1)
+
   ###Marginal covariance
   Sigma <- diag(as.numeric(Sigma2))
   SigmaInv <- diag(as.numeric(1 / Sigma2))
@@ -298,10 +389,24 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   CholHPsi <- chol(HPsi)
   HPsiInv <- chol2inv(CholHPsi)
   
+  ###CAR covariance objects
+  if (SpCorInd == 1) { #discrete
+    Dw <- diag(apply(SpDist, 1, sum))
+    SpCovInv <- Dw - Rho * SpDist
+    SpCov <- CholInv(SpCovInv)
+    CholSpCov <- matrix(0, nrow = M, ncol = M)
+  }
+  if (SpCorInd == 0) { #discrete
+    SpCov <- exp(-Rho * SpDist)
+    CholSpCov <- chol(SpCov)
+    SpCovInv <- chol2inv(CholSpCov)
+  }
+  
   ###Save parameter objects
   Para <- list()
   Para$Sigma2 <- Sigma2
   Para$Kappa2 <- Kappa2
+  Para$Rho <- Rho
   Para$Delta <- Delta
   Para$Psi <- Psi
   Para$Upsilon <- Upsilon
@@ -323,6 +428,11 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   Para$Mean <- kronecker(EyeNu, Lambda) %*% Eta
   Para$Weights <- Weights
   Para$logWeights <- logWeights
+  Para$U <- U
+  Para$LStarJ <- LStarJ
+  Para$SpCov <- SpCov
+  Para$CholSpCov <- CholSpCov
+  Para$SpCovInv <- SpCovInv
   return(Para)
 
 }
@@ -503,11 +613,12 @@ CreateStorage <- function(DatObj, McmcObj) {
   # Eta: K x Nu
   # Sigma: M
   # Kappa2: 1
+  # Rho: 1
   # Delta: K
   # Upsilon: K x (K + 1) / 2
   # Psi: 1
   # Xi: M * K
-  Out <- matrix(nrow = (M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K), ncol = NKeep)
+  Out <- matrix(nrow = (M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K + 1), ncol = NKeep)
   return(Out)
 
 }

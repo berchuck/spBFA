@@ -9,24 +9,24 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   arma::mat YStarWide = DatObj_List["YStarWide"];
   arma::colvec YStar = DatObj_List["YStar"];
   arma::colvec YObserved = DatObj_List["YObserved"];
-  arma::Mat<int> W = DatObj_List["W"];
+  arma::mat SpDist = DatObj_List["SpDist"];
   arma::mat TimeDist = DatObj_List["TimeDist"];
   arma::colvec Time = DatObj_List["Time"];
-  double Rho = DatObj_List["Rho"];
   int N = DatObj_List["N"];
   int K = DatObj_List["K"];
   int L = DatObj_List["L"];
   int M = DatObj_List["M"];
   int Nu = DatObj_List["Nu"];
   int TempCorInd = DatObj_List["TempCorInd"];
+  int SpCorInd = DatObj_List["SpCorInd"];
   int FamilyInd = DatObj_List["FamilyInd"];
-  arma::mat ICAR = DatObj_List["ICAR"];
-  arma::mat ICARInv = DatObj_List["ICARInv"];
+  int LInf = DatObj_List["LInf"];
   arma::mat EyeNu = DatObj_List["EyeNu"];
   arma::Col<int> SeqL = DatObj_List["SeqL"];
   arma::mat EyeM = DatObj_List["EyeM"];
   arma::mat EyeKbyNu = DatObj_List["EyeKbyNu"];
   arma::colvec ZeroKbyNu = DatObj_List["ZeroKbyNu"];
+  arma::colvec ZeroM = DatObj_List["ZeroM"];
   arma::colvec OneNu = DatObj_List["OneNu"];
 
   //Convert to C++ struct
@@ -35,24 +35,24 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.YStarWide = YStarWide;
   DatObj.YStar = YStar;
   DatObj.YObserved = YObserved;
-  DatObj.W = W;
+  DatObj.SpDist = SpDist;
   DatObj.TimeDist = TimeDist;
   DatObj.Time = Time;
-  DatObj.Rho = Rho;
   DatObj.N = N;
   DatObj.K = K;
   DatObj.L = L;
   DatObj.M = M;
   DatObj.Nu = Nu;
   DatObj.TempCorInd = TempCorInd;
+  DatObj.SpCorInd  = SpCorInd;
   DatObj.FamilyInd = FamilyInd;
-  DatObj.ICAR = ICAR;
-  DatObj.ICARInv = ICARInv;
+  DatObj.LInf = LInf;
   DatObj.EyeNu = EyeNu;
   DatObj.SeqL = SeqL;
   DatObj.EyeM = EyeM;
   DatObj.EyeKbyNu = EyeKbyNu;
   DatObj.ZeroKbyNu = ZeroKbyNu;
+  DatObj.ZeroM = ZeroM;
   DatObj.OneNu = OneNu;
   return DatObj;
 
@@ -72,6 +72,8 @@ hypara ConvertHyPara(Rcpp::List HyPara_List) {
   double A2 = HyPara_List["A2"];
   double APsi = HyPara_List["APsi"];
   double BPsi = HyPara_List["BPsi"];
+  double ARho = HyPara_List["ARho"];
+  double BRho = HyPara_List["BRho"];
   double Gamma = HyPara_List["Gamma"];
   double Beta = HyPara_List["Beta"];
   double Zeta = HyPara_List["Zeta"];
@@ -87,6 +89,8 @@ hypara ConvertHyPara(Rcpp::List HyPara_List) {
   HyPara.A2 = A2;
   HyPara.APsi = APsi;
   HyPara.BPsi = BPsi;
+  HyPara.ARho = ARho;
+  HyPara.BRho = BRho;
   HyPara.Gamma = Gamma;
   HyPara.Beta = Beta;
   HyPara.Zeta = Zeta;
@@ -103,12 +107,16 @@ metrobj ConvertMetrObj(Rcpp::List MetrObj_List) {
   //Set objects from List
   double MetropPsi = MetrObj_List["MetropPsi"];
   int AcceptancePsi = MetrObj_List["AcceptancePsi"];
-  double OriginalTuners = MetrObj_List["OriginalTuners"];
+  double MetropRho = MetrObj_List["MetropRho"];
+  int AcceptanceRho = MetrObj_List["AcceptanceRho"];
+  arma::vec OriginalTuners = MetrObj_List["OriginalTuners"];
   
   //Convert to C++ struct
   metrobj MetrObj;
   MetrObj.MetropPsi = MetropPsi;
   MetrObj.AcceptancePsi = AcceptancePsi;
+  MetrObj.MetropRho = MetropRho;
+  MetrObj.AcceptanceRho = AcceptanceRho;
   MetrObj.OriginalTuners = OriginalTuners;
   return MetrObj;
 
@@ -122,6 +130,7 @@ para ConvertPara(Rcpp::List Para_List) {
   //Set objects from List
   arma::colvec Sigma2 = Para_List["Sigma2"];
   double Kappa2 = Para_List["Kappa2"];
+  double Rho = Para_List["Rho"];
   arma::colvec Delta = Para_List["Delta"];
   double Psi = Para_List["Psi"];
   arma::mat Upsilon = Para_List["Upsilon"];
@@ -143,11 +152,17 @@ para ConvertPara(Rcpp::List Para_List) {
   arma::colvec Mean = Para_List["Mean"];
   arma::cube Weights = Para_List["Weights"];
   arma::cube logWeights = Para_List["logWeights"];
+  arma::mat U = Para_List["U"];
+  arma::colvec LStarJ = Para_List["LStarJ"];
+  arma::mat SpCov = Para_List["SpCov"];
+  arma::mat SpCovInv = Para_List["SpCovInv"];
+  arma::mat CholSpCov = Para_List["CholSpCov"];
 
   //Convert to C++ struct
   para Para;
   Para.Sigma2 = Sigma2;
   Para.Kappa2 = Kappa2;
+  Para.Rho = Rho;
   Para.Delta = Delta;
   Para.Psi = Psi;
   Para.Upsilon = Upsilon;
@@ -169,6 +184,11 @@ para ConvertPara(Rcpp::List Para_List) {
   Para.Mean = Mean;
   Para.Weights = Weights;
   Para.logWeights = logWeights;
+  Para.U = U;
+  Para.LStarJ = LStarJ;
+  Para.SpCov = SpCov;
+  Para.SpCovInv = SpCovInv;
+  Para.CholSpCov = CholSpCov;
   return Para;
 }
 

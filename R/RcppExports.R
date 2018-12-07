@@ -9,12 +9,20 @@ H <- function(Psi, TempCorInd, TimeDist, Nu) {
     .Call('_spBFA_H', PACKAGE = 'spBFA', Psi, TempCorInd, TimeDist, Nu)
 }
 
+SpEXP <- function(Rho, SpDist, M) {
+    .Call('_spBFA_SpEXP', PACKAGE = 'spBFA', Rho, SpDist, M)
+}
+
 bfa_sp_Rcpp <- function(DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive) {
     .Call('_spBFA_bfa_sp_Rcpp', PACKAGE = 'spBFA', DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive)
 }
 
-Play <- function() {
-    invisible(.Call('_spBFA_Play', PACKAGE = 'spBFA'))
+Play <- function(X) {
+    .Call('_spBFA_Play', PACKAGE = 'spBFA', X)
+}
+
+GetLStarJ <- function(U, Weights, K, M) {
+    .Call('_spBFA_GetLStarJ', PACKAGE = 'spBFA', U, Weights, K, M)
 }
 
 GetLambda <- function(Theta, Xi, K, M) {

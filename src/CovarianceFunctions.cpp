@@ -36,3 +36,16 @@ arma::mat H(double Psi, int TempCorInd, arma::mat const& TimeDist, int Nu) {
   }
   return out;
 }
+
+
+
+//Function to calculate spatial correlation structure-------------------------------------------------------------
+//This function is being exported to R for use in this package exclusively...
+//not for use by users.
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::export]]
+arma::mat SpEXP(double Rho, arma::mat const& SpDist, int M) {
+  arma::mat out(M, M);
+  out = arma::exp(-Rho * SpDist);
+  return out;
+}

@@ -20,9 +20,11 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
 
   //Set objects to be used in MCMC sampler
   int FamilyInd = DatObj.FamilyInd;
+  int SpCorInd = DatObj.SpCorInd;
   int NTotal = McmcObj.NTotal;
   int NBurn = McmcObj.NBurn;
   int NTrunc = DatAug.NBelow + DatAug.NAbove;
+  int LInf = DatObj.LInf;
   arma::vec WhichPilotAdapt = McmcObj.WhichPilotAdapt;
   arma::vec WhichKeep = McmcObj.WhichKeep;
   arma::vec WhichBurnInProgress = McmcObj.WhichBurnInProgress;
@@ -40,11 +42,15 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     //Check for user interrupt every 500 iterations
     if (s % 500 == 0) Rcpp::checkUserInterrupt();
 
+    //Gibbs step for Latent U
+    if (LInf == 1) Para = SampleU(DatObj, Para);
+    
     // Data Augmentation Step
     if ((FamilyInd != 0) & (NTrunc > 0)) DatObj = SampleY(DatObj, Para, DatAug);
     
     //Gibbs step for Theta
     Para = SampleTheta(DatObj, Para);
+    // Rcpp::Rcout << std::fixed << 0 << std::endl;
     
     //Gibbs step for Xi
     Para = SampleXi(DatObj, Para);
@@ -58,6 +64,13 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     //Gibbs step for Kappa2
     Para = SampleKappa2(DatObj, Para, HyPara);
     
+    //Metropolis step for Rho
+    if (SpCorInd == 0) {
+      Update = SampleRho(DatObj, Para, HyPara, MetrObj);
+      Para = Update.first;
+      MetrObj = Update.second;
+    }
+  
     //Gibbs step for Delta
     Para = SampleDelta(DatObj, Para, HyPara);
     
@@ -77,7 +90,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     
     //Pilot adaptation
     if (std::find(WhichPilotAdapt.begin(), WhichPilotAdapt.end(), s) != WhichPilotAdapt.end())
-      MetrObj = PilotAdaptation(MetrObj, McmcObj);
+      MetrObj = PilotAdaptation(MetrObj, McmcObj, DatObj);
 
     //Store raw samples
     if (std::find(WhichKeep.begin(), WhichKeep.end(), s) != WhichKeep.end())
@@ -90,7 +103,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
       UpdateBurnInBarInt(s, McmcObj);
 
     //Post burn-in progress
-    if (s == NBurn) Rcpp::Rcout << std::fixed << "\nSampler progress:  0%..  ";
+    if (s == NBurn) Rcpp::Rcout << std::fixed << "\nSampler progress:  0%.. ";
     if (std::find(WhichSamplerProgress.begin(), WhichSamplerProgress.end(), s) != WhichSamplerProgress.end())
        SamplerProgress(s, McmcObj);
 
@@ -98,7 +111,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   }
 
   //Output Metropolis object for summary
-  Rcpp::List Metropolis = OutputMetrObj(MetrObj);
+  Rcpp::List Metropolis = OutputMetrObj(MetrObj, DatObj);
 
   //Return raw samples
   return Rcpp::List::create(Rcpp::Named("rawsamples") = RawSamples,

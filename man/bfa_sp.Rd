@@ -4,10 +4,10 @@
 \alias{bfa_sp}
 \title{MCMC sampler for spatial Bayesian factor analysis.}
 \usage{
-bfa_sp(Y, W, Time, K, L, Starting = NULL, Hypers = NULL,
-  Tuning = NULL, MCMC = NULL, Family = "tobit",
-  TemporalStructure = "exponential", Rho = 0.99, ScaleY = 10,
-  Seed = 54)
+bfa_sp(Y, Dist, Time, K, L = Inf, Starting = Starting,
+  Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, ScaleY = 1,
+  Family = "normal", Seed = 54, TemporalStructure = "exponential",
+  SpatialStructure = "discrete")
 }
 \arguments{
 \item{Y}{An \code{N} dimensional vector containing the observed outcome data.
@@ -15,9 +15,6 @@ Here, \code{N = M * Nu}, where \code{M} represents the number of spatial locatio
 and \code{Nu} the number of temporal visits. The observations in \code{Y} must be first
 ordered spatially and then temporally, meaning the first \code{M} observations
 in \code{Y} should come from the initial time point.}
-
-\item{W}{An \code{M x M} dimensional binary adjacency matrix for dictating the
-spatial neigborhood structure.}
 
 \item{Time}{A \code{Nu} dimensional vector containing the observed time points for each
 vector of outcomes in increasing order.}
@@ -78,15 +75,12 @@ vector of outcomes in increasing order.}
  \code{NPilot}: The number of times during the burn-in phase that pilot adaptation
  is performed (default = \code{20})}
 
-\item{Family}{Character string indicating the distribution of the observed data. Options
-include: \code{"normal"}, \code{"probit"}, \code{"tobit"}.}
-
-\item{Rho}{A scalar in \code{(0,1)} that dictates the magnitude of local spatial sharing.
-By default it is fixed at \code{0.99} as suggested by Lee and Mitchell (2012).}
-
 \item{ScaleY}{A positive scalar used for scaling the observed data, \code{Y}. This is
 used to aid numerically for MCMC convergence, as scaling large observations often
 stabilizes chains. By default it is fixed at \code{10}.}
+
+\item{Family}{Character string indicating the distribution of the observed data. Options
+include: \code{"normal"}, \code{"probit"}, \code{"tobit"}.}
 
 \item{Seed}{An integer value used to set the seed for the random number generator
 (default = 54).}
@@ -95,11 +89,17 @@ stabilizes chains. By default it is fixed at \code{10}.}
 for each spatial location. The order of the spatial locations must match the order from
 \code{Y}.}
 
+\item{W}{An \code{M x M} dimensional binary adjacency matrix for dictating the
+spatial neigborhood structure.}
+
 \item{Distance}{Character string indicating the distance metric for computing the
 dissimilarity metric. Options include: \code{"euclidean"} and \code{"circumference"}.}
 
 \item{Weights}{Character string indicating the type of weight used. Options include:
 \code{"continuous"} and \code{"binary"}.}
+
+\item{Rho}{A scalar in \code{(0,1)} that dictates the magnitude of local spatial sharing.
+By default it is fixed at \code{0.99} as suggested by Lee and Mitchell (2012).}
 
 \item{ScaleDM}{A positive scalar used for scaling the dissimilarity metric distances,
 \code{DM}. This is used to aid numerically for MCMC convergence. as scaling spatial
