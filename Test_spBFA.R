@@ -18,26 +18,33 @@ library(spBFA)
 # devtools::submit_cran(path.package) # submit to CRAN without going through checks
 
 ###Format data for MCMC sampler
-# library(womblR)
-# VFSeries <- VFSeries[order(VFSeries$Visit), ] #sort by visit
-# VFSeries <- VFSeries[!VFSeries$Location %in% c(26, 35), ] #remove blind spot locations
-# Y <- VFSeries$DLS #assign observed outcome data
-# Time <- unique(VFSeries$Time) / 365 #time since first visit
-# Nu <- length(Time)
-# K <- 6
-# L <- 50
-# W <- HFAII_Queen[-c(26, 35), -c(26, 35)] #Visual field adjacency matrix
+library(womblR)
+VFSeries <- VFSeries[order(VFSeries$Visit), ] #sort by visit
+VFSeries <- VFSeries[!VFSeries$Location %in% c(26, 35), ] #remove blind spot locations
+Y <- VFSeries$DLS #assign observed outcome data
+O <- 2
+M <- 52 
+Nu <- dim(VFSeries)[1] / M
+YWide <- matrix(Y, nrow = M, ncol = Nu)
+YWide2 <- YWide + matrix(sample(-5:5, M * Nu, replace = TRUE), nrow = M, ncol = Nu)
+Data <- array(dim = c(M, O, Nu))
+Data[ , 1, ] <- YWide
+Data[ , 2, ] <- YWide2
+Time <- unique(VFSeries$Time) / 365 #time since first visit
+K <- 15
+L <- Inf
+W <- HFAII_Queen[-c(26, 35), -c(26, 35)] #Visual field adjacency matrix
 
 ###Load simulated dataset
-load("/Volumes/Macintosh HD/Users/sam/Box Sync/Postdoc/Projects/SFA/Simulations/Simulation1/Data/SimData.RData")
-Time <- SimData[[3]]
-Y <- matrix(SimData[[1]][, 1], ncol = 1)
-W <- SimData[[2]]
-K <- 10
+# load("/Volumes/Macintosh HD/Users/sam/Box Sync/Postdoc/Projects/SFA/Simulations/Simulation1/Data/SimData.RData")
+# Time <- SimData[[3]]
+# Y <- matrix(SimData[[1]][, 1], ncol = 1)
+# W <- SimData[[2]]
+# K <- 10
 
 ###Center data
-YWide <- matrix(Y, nrow = 100, ncol = 21)
-YCenter <- matrix(scale(YWide, scale = FALSE), ncol = 1)
+# YWide <- matrix(Y, nrow = 100, ncol = 21)
+# YCenter <- matrix(scale(YWide, scale = FALSE), ncol = 1)
 
 ###Bounds for temporal tuning parameter
 TimeDist <- abs(outer(Time, Time, "-"))
@@ -58,31 +65,32 @@ BRho <- -log(0.05) / minDiff #shortest diff goes down to 1%
 
 ###Initial values
 Starting <- list(Sigma2 = 1,
-                 Kappa2 = 1,
-                 Rho = 1,
+                 Kappa = diag(O),
+                 Rho = 0.99,
                  Delta = 2 * (1:K),
                  Psi = 1,
                  Upsilon = diag(K))
 
 ###Hyperparameters
 Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
-               Kappa2 = list(C = 0.001, D = 0.001),
-               Rho = list(ARho = ARho, BRho = BRho),
+               Kappa = list(Upsilon = O + 1, Theta = diag(O)),
                Delta = list(A1 = 1, A2 = 20),
                Psi = list(APsi = APsi, BPsi = BPsi),
                Upsilon = list(Zeta = K + 1, Omega = diag(K)))
 
 ###Metropolis tuners
-Tuning <- list(Psi = 1, Rho = 1)
+Tuning <- list(Psi = 1)
 
 ###MCMC inputs
 # MCMC <- list(NBurn = 10000, NSims = 250000, NThin = 25, NPilot = 10)
 MCMC <- list(NBurn = 100, NSims = 250, NThin = 1, NPilot = 2)
 
 ###Fit sampler
-reg.bfa_sp <- bfa_sp(Y = Y, Dist = SpDist, Time = Time, K = K,
+reg.bfa_sp <- bfa_sp(Y = Data, Dist = W, Time = Time, K = K, L = Inf,
                      Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC,
-                     TemporalStructure = "exponential", SpatialStructure = "continuous")
+                     TemporalStructure = "exponential", SpatialStructure = "discrete",
+                     Family = c("tobit", "normal"))
+
 
 
 save(reg.bfa_sp, file = "/Users/sam/Desktop/out.RData")
@@ -187,5 +195,5 @@ save(reg.bfa_sp, file = "/Users/sam/Desktop/out.RData")
 # 
 # install.packages("spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
 .libPaths( c( .libPaths(), "/home/sib2/R") )
-install.packages("spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
+install.packages("/home/sib2/Packages/spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
 install.packages("womblR_1.0.3.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)

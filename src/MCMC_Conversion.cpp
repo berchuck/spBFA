@@ -8,7 +8,7 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   double ScaleY = DatObj_List["ScaleY"];
   arma::mat YStarWide = DatObj_List["YStarWide"];
   arma::colvec YStar = DatObj_List["YStar"];
-  arma::colvec YObserved = DatObj_List["YObserved"];
+  arma::cube YObserved = DatObj_List["YObserved"];
   arma::mat SpDist = DatObj_List["SpDist"];
   arma::mat TimeDist = DatObj_List["TimeDist"];
   arma::colvec Time = DatObj_List["Time"];
@@ -17,17 +17,22 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   int L = DatObj_List["L"];
   int M = DatObj_List["M"];
   int Nu = DatObj_List["Nu"];
+  int O = DatObj_List["O"];
   int TempCorInd = DatObj_List["TempCorInd"];
   int SpCorInd = DatObj_List["SpCorInd"];
-  int FamilyInd = DatObj_List["FamilyInd"];
+  arma::Col<int> FamilyInd = DatObj_List["FamilyInd"];
   int LInf = DatObj_List["LInf"];
   arma::mat EyeNu = DatObj_List["EyeNu"];
   arma::Col<int> SeqL = DatObj_List["SeqL"];
   arma::mat EyeM = DatObj_List["EyeM"];
+  arma::mat EyeO = DatObj_List["EyeO"];
+  arma::mat EyeOM = DatObj_List["EyeOM"];
   arma::mat EyeKbyNu = DatObj_List["EyeKbyNu"];
   arma::colvec ZeroKbyNu = DatObj_List["ZeroKbyNu"];
   arma::colvec ZeroM = DatObj_List["ZeroM"];
+  arma::colvec ZeroOM = DatObj_List["ZeroOM"];
   arma::colvec OneNu = DatObj_List["OneNu"];
+  arma::colvec OneO = DatObj_List["OneO"];
 
   //Convert to C++ struct
   datobj DatObj;
@@ -43,17 +48,22 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.L = L;
   DatObj.M = M;
   DatObj.Nu = Nu;
+  DatObj.O = O;
   DatObj.TempCorInd = TempCorInd;
   DatObj.SpCorInd  = SpCorInd;
   DatObj.FamilyInd = FamilyInd;
   DatObj.LInf = LInf;
   DatObj.EyeNu = EyeNu;
+  DatObj.EyeO = EyeO;
   DatObj.SeqL = SeqL;
   DatObj.EyeM = EyeM;
+  DatObj.EyeOM = EyeOM;
   DatObj.EyeKbyNu = EyeKbyNu;
+  DatObj.ZeroOM = ZeroOM;
   DatObj.ZeroKbyNu = ZeroKbyNu;
   DatObj.ZeroM = ZeroM;
   DatObj.OneNu = OneNu;
+  DatObj.OneO = OneO;
   return DatObj;
 
 }
@@ -66,8 +76,7 @@ hypara ConvertHyPara(Rcpp::List HyPara_List) {
   //Set objects from List
   double A = HyPara_List["A"];
   double B = HyPara_List["B"];
-  double C = HyPara_List["C"];
-  double D = HyPara_List["D"];
+  double SmallUpsilon = HyPara_List["SmallUpsilon"];
   double A1 = HyPara_List["A1"];
   double A2 = HyPara_List["A2"];
   double APsi = HyPara_List["APsi"];
@@ -78,13 +87,13 @@ hypara ConvertHyPara(Rcpp::List HyPara_List) {
   double Beta = HyPara_List["Beta"];
   double Zeta = HyPara_List["Zeta"];
   arma::mat Omega = HyPara_List["Omega"];
+  arma::mat BigTheta = HyPara_List["BigTheta"];
   
   //Convert to C++ struct
   hypara HyPara;
   HyPara.A = A;
   HyPara.B = B;
-  HyPara.C = C;
-  HyPara.D = D;
+  HyPara.SmallUpsilon = SmallUpsilon;
   HyPara.A1 = A1;
   HyPara.A2 = A2;
   HyPara.APsi = APsi;
@@ -95,6 +104,7 @@ hypara ConvertHyPara(Rcpp::List HyPara_List) {
   HyPara.Beta = Beta;
   HyPara.Zeta = Zeta;
   HyPara.Omega = Omega;
+  HyPara.BigTheta = BigTheta;
   return HyPara;
 
 }
@@ -129,7 +139,7 @@ para ConvertPara(Rcpp::List Para_List) {
 
   //Set objects from List
   arma::colvec Sigma2 = Para_List["Sigma2"];
-  double Kappa2 = Para_List["Kappa2"];
+  arma::mat Kappa = Para_List["Kappa"];
   double Rho = Para_List["Rho"];
   arma::colvec Delta = Para_List["Delta"];
   double Psi = Para_List["Psi"];
@@ -157,11 +167,13 @@ para ConvertPara(Rcpp::List Para_List) {
   arma::mat SpCov = Para_List["SpCov"];
   arma::mat SpCovInv = Para_List["SpCovInv"];
   arma::mat CholSpCov = Para_List["CholSpCov"];
+  arma::mat CholKappa = Para_List["CholKappa"];
+  arma::mat KappaInv = Para_List["KappaInv"];
 
   //Convert to C++ struct
   para Para;
   Para.Sigma2 = Sigma2;
-  Para.Kappa2 = Kappa2;
+  Para.Kappa = Kappa;
   Para.Rho = Rho;
   Para.Delta = Delta;
   Para.Psi = Psi;
@@ -189,6 +201,8 @@ para ConvertPara(Rcpp::List Para_List) {
   Para.SpCov = SpCov;
   Para.SpCovInv = SpCovInv;
   Para.CholSpCov = CholSpCov;
+  Para.CholKappa = CholKappa;
+  Para.KappaInv = KappaInv;
   return Para;
 }
 

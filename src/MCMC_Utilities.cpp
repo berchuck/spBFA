@@ -116,12 +116,13 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   int M = DatObj.M;
   int K = DatObj.K;
   int Nu = DatObj.Nu;
+  int O = DatObj.O;
 
   //Set parameter objects
   arma::mat Lambda = Para.Lambda;
   arma::mat BigPhi = Para.BigPhi;
   arma::colvec Sigma2 = Para.Sigma2;
-  double Kappa2 = Para.Kappa2;
+  arma::mat Kappa = Para.Kappa;
   arma::colvec Delta = Para.Delta;
   arma::mat Upsilon = Para.Upsilon;
   double Psi = Para.Psi;
@@ -130,11 +131,15 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   
   //Save raw samples
   int counter = 0;
-  arma::colvec col(M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K + 1);
-  for (arma::uword i = 0; i < M; i++) {
-    for (arma::uword j = 0; j < K; j++) {
-      col(counter) = Lambda(i, j);
-      counter++;
+  arma::uword Index;
+  arma::colvec col(O * M * K + K * Nu + M + ((O + 1) * O) / 2 + K + ((K + 1) * K) / 2 + 1 + O * M * K + 1);
+  for (arma::uword o = 0; o < O; o++) {
+    for (arma::uword i = 0; i < M; i++) {
+      Index = i + M * o;
+      for (arma::uword j = 0; j < K; j++) {
+        col(counter) = Lambda(Index, j);
+        counter++;
+      }
     }
   }
   for (arma::uword j = 0; j < K; j++) {
@@ -147,8 +152,12 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
     col(counter) = Sigma2(i);
     counter++;
   }
-  col(counter) = Kappa2;
-  counter++;
+  for (arma::uword i = 0; i < O; i++) {
+    for (arma::uword j = 0; j <= i; j++) {
+      col(counter) = Kappa(i, j);
+      counter++;
+    }
+  }
   for (arma::uword j = 0; j < K; j++) {
     col(counter) = Delta(j);
     counter++;
@@ -161,10 +170,13 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   }
   col(counter) = Psi;
   counter++;
-  for (arma::uword i = 0; i < M; i++) {
-    for (arma::uword j = 0; j < K; j++) {
-      col(counter) = Xi(i, j);
-      counter++;
+  for (arma::uword o = 0; o < O; o++) {
+    for (arma::uword i = 0; i < M; i++) {
+      Index = i + M * o;
+      for (arma::uword j = 0; j < K; j++) {
+        col(counter) = Xi(Index, j);
+        counter++;
+      }
     }
   }
   col(counter) = Rho;

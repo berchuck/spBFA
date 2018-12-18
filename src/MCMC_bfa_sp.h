@@ -19,12 +19,13 @@ struct datobj {
   int Nu;
   int K;
   int L;
-  int FamilyInd;
+  int O;
+  arma::Col<int> FamilyInd;
   int TempCorInd;
   int SpCorInd;
   int LInf;
   arma::colvec YStar;
-  arma::colvec YObserved;
+  arma::cube YObserved;
   arma::mat YStarWide;
   arma::mat SpDist;
   arma::colvec Time;
@@ -32,16 +33,19 @@ struct datobj {
   arma::mat EyeNu;
   arma::Col<int> SeqL;
   arma::mat EyeM;
+  arma::mat EyeO;
+  arma::mat EyeOM;
   arma::mat EyeKbyNu;
   arma::colvec ZeroKbyNu;
   arma::colvec ZeroM;
+  arma::colvec ZeroOM;
   arma::colvec OneNu;
+  arma::colvec OneO;
 };
 struct hypara {
   double A;
   double B;
-  double C;
-  double D;
+  double SmallUpsilon;
   double A1;
   double A2;
   double APsi;
@@ -52,6 +56,7 @@ struct hypara {
   double Beta;
   double Zeta;
   arma::mat Omega;
+  arma::mat BigTheta;
 };
 struct metrobj {
   double MetropPsi;
@@ -63,7 +68,7 @@ struct metrobj {
 struct para {
   arma::colvec Sigma2;
   arma::colvec Delta;
-  double Kappa2;
+  arma::mat Kappa;
   double Psi;
   double Rho;
   arma::mat Upsilon;
@@ -90,6 +95,8 @@ struct para {
   arma::mat SpCov;
   arma::mat SpCovInv;
   arma::mat CholSpCov;
+  arma::mat CholKappa;
+  arma::mat KappaInv;
 };
 struct dataug {
   int NBelow;
@@ -148,14 +155,14 @@ para SampleTheta(datobj DatObj, para Para);
 para SampleXi(datobj DatObj, para Para);
 para SampleZ(datobj DatObj, para Para);
 para SampleAlpha(datobj DatObj, para Para);
-para SampleKappa2(datobj DatObj, para Para, hypara HyPara);
+para SampleKappa(datobj DatObj, para Para, hypara HyPara);
 para SampleDelta(datobj DatObj, para Para, hypara HyPara);
 para SampleEta(datobj DatObj, para Para, hypara HyPara);
 para SampleUpsilon(datobj DatObj, para Para, hypara HyPara);
 std::pair<para, metrobj> SamplePsi(datobj DatObj, para Para, hypara HyPara, metrobj MetrObj);
 para SampleSigma2(datobj DatObj, para Para, hypara HyPara);
-arma::colvec SampleProbit(datobj DatObj, para Para, dataug DatAug);
-arma::colvec SampleTobit(datobj DatObj, para Para, dataug DatAug);
+arma::colvec SampleUpper(datobj DatObj, para Para, dataug DatAug);
+arma::colvec SampleLower(datobj DatObj, para Para, dataug DatAug);
 datobj SampleY(datobj DatObj, para Para, dataug DatAug);
 para SampleU(datobj DatObj, para Para);
 std::pair<para, metrobj> SampleRho(datobj DatObj, para Para, hypara HyPara, metrobj MetrObj);
@@ -172,10 +179,10 @@ void UpdateBurnInBarInt(int s, mcmcobj McmcObj);
 //UTILITY FUNCTIONS
 arma::mat GetRooti(arma::mat const& Cov, arma::mat const& Eye);
 arma::mat CholInv(arma::mat const& Cov);
-arma::mat GetLambda(arma::mat const& Theta, arma::umat const& Xi, int K, int M);
-arma::cube GetlogWeights(arma::cube const& Alpha, int K, int M, int L);
-arma::cube GetWeights(arma::cube const& Alpha, int K, int M, int L);
+arma::mat GetLambda(arma::mat const& Theta, arma::umat const& Xi, int K, int M, int O);
+arma::cube GetlogWeights(arma::cube const& Alpha, int K, int M, int L, int O);
+arma::cube GetWeights(arma::cube const& Alpha, int K, int M, int L, int O);
 bool rows_equal(arma::mat const& lhs, arma::mat const& rhs, double tol);
-arma::colvec GetLStarJ(arma::mat const& U, arma::cube const& Weights, int K, int M);
+arma::colvec GetLStarJ(arma::mat const& U, arma::cube const& Weights, int K, int M, int O);
 
 #endif // __spBFA__

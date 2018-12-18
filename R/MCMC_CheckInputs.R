@@ -1,13 +1,17 @@
 CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, SpatialStructure, ScaleY) {
   
   ###Data dimensions
-  N <- length(Y)
-  M <- dim(Dist)[1]
-  Nu <- length(Time)
+  N <- length(as.numeric(Y))
+  M <- dim(Y)[1]
+  O <- dim(Y)[2]
+  Nu <- dim(Y)[3]
 
   ###Family
-  if (!Family %in% c("normal", "probit", "tobit")) stop('Family: must be one of "normal", "probit" or "tobit"')
-
+  if ((length(Family) != O) & (length(Family) != 1)) stop(paste0('Family: must have 1 or O = ', O, ' entries'))
+  bool <- logical(length = length(Family))
+  for (i in 1:length(Family)) bool[i] <- !(Family[i] %in% c("normal", "probit", "tobit"))
+  if (any(bool)) stop('Family: All entries must be one of "normal", "probit" or "tobit"')
+  
   ###Temporal correlation
   if (!TemporalStructure %in% c("ar1", "exponential")) stop('TemporalStructure: must be one of "ar1" or "exponential"')
 
@@ -22,12 +26,24 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
   if (!(ScaleY > 0)) stop('ScaleY must be positive')
 
   ###Data checks for Y
-  if (!is.numeric(Y)) stop('Y must be a vector')
-  if (length(Y) != N) stop(paste0('Y must have length ', N))
+  if (!is.array(Y)) stop('Y must be an array')
+  if (length(Y) != N) stop(paste0('Y must have exactly ', N, 'values'))
   if (any(is.na(Y))) stop("Y may have no missing values")
   if (any(!is.finite(Y))) stop("Y must have strictly finite entries")
-  if ((Family == "probit") & ((sum(Y == 1) + sum(Y == 0)) != N)) stop('Y: for "probit" observed data must be binary')
-  if ((Family == "tobit") & (any(Y < 0))) stop('Y: for "tobit" observed data must be non-negative')
+  if (any(Family == "probit")) {
+    for (o in 1:O) {
+      if (Family[o] == "probit") {
+        if ((sum(Y[ , o, ] == 1) + sum(Y[ , o, ] == 0)) != (Nu * M)) stop('Y: for "probit" observed data must be binary')
+      }
+    }
+  } 
+  if (any(Family == "tobit")) {
+    for (o in 1:O) {
+      if (Family[o] == "tobit") {
+        if (any(Y[ , o, ] < 0)) stop('Y: for "tobit" observed data must be non-negative')
+      }
+    }
+  } 
 
   ###Data checks for Dist
   if (!is.matrix(Dist)) stop('Dist must be a matrix')
@@ -59,13 +75,10 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
   if (is.na(L)) stop('L cannot be NA')
   if (is.finite(L)) if (!is.wholenumber(L) | L <= 0) stop('L as a scalar must be a strictly positive integer')
   
-  ###Verify dimensions
-  if ((N / M) != Nu) stop('Time and Y have contradictory dimensions')
-
   ###Hypers
   if (!is.null(Hypers)) {
     if (!is.list(Hypers)) stop('Hypers must be a list')
-    if (!all(names(Hypers) %in% c("Sigma2", "Kappa2", "Rho", "Delta", "Psi", "Upsilon"))) stop('Hypers: Can only contain lists with names "Sigma2", "Kappa2" and "Delta", "Psi", or "Upsilon"')
+    if (!all(names(Hypers) %in% c("Sigma2", "Kappa", "Rho", "Delta", "Psi", "Upsilon"))) stop('Hypers: Can only contain lists with names "Sigma2", "Kappa" and "Delta", "Psi", or "Upsilon"')
 
     ###If Sigma2 hyperparameters are provided
     if ("Sigma2" %in% names(Hypers)) {
@@ -82,24 +95,28 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
       if (Hypers$Sigma2$B <= 0) stop('Hypers: "B" must be strictly positive')
     }
     
-    ###If Kappa2 hyperparameters are provided
-    if ("Kappa2" %in% names(Hypers)) {
-      if (!is.list(Hypers$Kappa2)) stop('Hypers: "Kappa2" must be a list')
-      if (!"C" %in% names(Hypers$Kappa2)) stop('Hypers: "C" value missing')
-      if (!is.scalar(Hypers$Kappa2$C)) stop('Hypers: "C" must be a scalar')
-      if (is.na(Hypers$Kappa2$C)) stop('Hypers: "C" cannot be NA')
-      if (!is.finite(Hypers$Kappa2$C)) stop('Hypers: "C" cannot be infinite')
-      if (Hypers$Kappa2$C <= 0) stop('Hypers: "C" must be strictly positive')
-      if (!"D" %in% names(Hypers$Kappa2)) stop('Hypers: "D" value missing')
-      if (!is.scalar(Hypers$Kappa2$D)) stop('Hypers: "D" must be a scalar')
-      if (is.na(Hypers$Kappa2$D)) stop('Hypers: "D" cannot be NA')
-      if (!is.finite(Hypers$Kappa2$D)) stop('Hypers: "D" cannot be infinite')
-      if (Hypers$Kappa2$D <= 0) stop('Hypers: "D" must be strictly positive')
+    ###If Kappa hyperparameters are provided
+    if ("Kappa" %in% names(Hypers)) {
+      if (!is.list(Hypers$Kappa)) stop('Hypers: "Kappa" must be a list')
+      if (!"SmallUpsilon" %in% names(Hypers$Kappa)) stop('Hypers: "Kappa" value missing for SmallUpsilon')
+      if (!is.scalar(Hypers$Kappa$SmallUpsilon)) stop('Hypers: "SmallUpsilon" must be a scalar')
+      if (is.na(Hypers$Kappa$SmallUpsilon)) stop('Hypers: "SmallUpsilon" cannot be NA')
+      if (!is.finite(Hypers$Kappa$SmallUpsilon)) stop('Hypers: "Kappa" cannot be infinite')
+      if (Hypers$Kappa$SmallUpsilon <= 0) stop('Hypers: "SmallUpsilon" must be strictly positive')
+      if (!"BigTheta" %in% names(Hypers$Kappa)) stop('Hypers: "BigTheta" value missing')
+      if (!is.matrix(Hypers$Kappa$BigTheta)) stop('Hypers: "BigTheta" must be a matrix')
+      if (!dim(Hypers$Kappa$BigTheta)[1] == O) stop('Hypers: "BigTheta" must be O dimensional')
+      if (!all(!is.na(Hypers$Kappa$BigTheta))) stop('Hypers: "BigTheta" cannot have missing values')
+      if (!all(is.finite(Hypers$Kappa$BigTheta))) stop('Hypers: "BigTheta" cannot have infinite values')
+      if (!dim(Hypers$Kappa$BigTheta)[2] == O) stop('Hypers: "BigTheta" must be square')
+      if (sum( !( (Hypers$Kappa$BigTheta) == t(Hypers$Kappa$BigTheta) ) ) > 0) stop('Hypers: "BigTheta" must be symmetric')
+      if ((det(Hypers$Kappa$BigTheta) - 0) < 0.00001) stop('Hypers: "BigTheta" is close to singular')
+      
     }
 
     ###If Rho hyperparameters are provided
     if ("Rho" %in% names(Hypers)) {
-      if (SpatialStructure == "discrete") if (!is.null(NULL)) stop('Hypers: When SpatialStructure = "discrete", "Rho" must be NULL')
+      if (SpatialStructure == "discrete") if (!is.null(Hypers$Rho)) stop('Hypers: When SpatialStructure = "discrete", "Rho" must be NULL')
       if (SpatialStructure == "continuous") {
         if (!is.list(Hypers$Rho)) stop('Hypers: "Rho" must be a list')
         if (!"ARho" %in% names(Hypers$Rho)) stop('Hypers: "ARho" value missing')
@@ -196,7 +213,7 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
   ###Starting Values
   if (!is.null(Starting)) {
     if (!is.list(Starting)) stop('Starting must be a list')
-    if (!all(names(Starting) %in% c("Sigma2", "Kappa2", "Rho", "Delta", "Psi", "Upsilon"))) stop('Starting: Can only contain objects with names "Sigma2", "Kappa2", "Rho", "Delta", "Psi", and "Upsilon"')
+    if (!all(names(Starting) %in% c("Sigma2", "Kappa", "Rho", "Delta", "Psi", "Upsilon"))) stop('Starting: Can only contain objects with names "Sigma2", "Kappa", "Rho", "Delta", "Psi", and "Upsilon"')
 
     ###If Delta starting values is provided
     if ("Delta" %in% names(Starting)) {
@@ -214,12 +231,15 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
       if (Starting$Sigma2 <= 0) stop('Starting: "Sigma2" must be strictly positive')
     }
     
-    ###If Kappa2 starting values is provided
-    if ("Kappa2" %in% names(Starting)) {
-      if (!is.scalar(Starting$Kappa2)) stop('Starting: "Kappa2" must be a scalar')
-      if (is.na(Starting$Kappa2)) stop('Starting: "Kappa2" cannot be NA')
-      if (!is.finite(Starting$Kappa2)) stop('Starting: "Kappa2" cannot be infinite')
-      if (Starting$Kappa2 <= 0) stop('Starting: "Kappa2" must be strictly positive')
+    ###If Kappa starting values is provided
+    if ("Kappa" %in% names(Starting)) {
+      if (!is.matrix(Starting$Kappa)) stop('Starting: "Kappa" must be a matrix')
+      if (!dim(Starting$Kappa)[1] == O) stop('Starting: "Kappa" must be O dimensional')
+      if (!dim(Starting$Kappa)[2] == O) stop('Starting: "Kappa" must be square')
+      if (!all(!is.na(Starting$Kappa))) stop('Starting: "Kappa" cannot have missing values')
+      if (!all(is.finite(Starting$Kappa))) stop('Starting: "Kappa" cannot have infinite values')
+      if (sum( !( (Starting$Kappa) == t(Starting$Kappa) ) ) > 0) stop('Starting: "Kappa" must be symmetric')
+      if ((det(Starting$Kappa) - 0) < 0.0000000001) stop('Starting: "Kappa" is close to singular')
     }
 
     ###If Rho starting values is provided
@@ -228,7 +248,7 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
         if (!is.scalar(Starting$Rho)) stop('Starting: "Rho" must be a scalar')
         if (is.na(Starting$Rho)) stop('Starting: "Rho" cannot be NA')
         if (!is.finite(Starting$Rho)) stop('Starting: "Rho" cannot be infinite')
-        if ((Starting$Rho <= 0) | (Starting$Rho >= 1)) stop('Starting: "Rho" must be in (0, 1)')
+        if ((Starting$Rho <= 0) | (Starting$Rho >= 1)) stop('Starting: "Rho" must be in (0, 1) for discrete spatial process')
       }
       if (SpatialStructure == "continuous") {
         if (!is.scalar(Starting$Rho)) stop('Starting: "Rho" must be a scalar')

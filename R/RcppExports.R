@@ -21,20 +21,20 @@ Play <- function(X) {
     .Call('_spBFA_Play', PACKAGE = 'spBFA', X)
 }
 
-GetLStarJ <- function(U, Weights, K, M) {
-    .Call('_spBFA_GetLStarJ', PACKAGE = 'spBFA', U, Weights, K, M)
+GetLStarJ <- function(U, Weights, K, M, O) {
+    .Call('_spBFA_GetLStarJ', PACKAGE = 'spBFA', U, Weights, K, M, O)
 }
 
-GetLambda <- function(Theta, Xi, K, M) {
-    .Call('_spBFA_GetLambda', PACKAGE = 'spBFA', Theta, Xi, K, M)
+GetLambda <- function(Theta, Xi, K, M, O) {
+    .Call('_spBFA_GetLambda', PACKAGE = 'spBFA', Theta, Xi, K, M, O)
 }
 
-GetWeights <- function(Alpha, K, M, L) {
-    .Call('_spBFA_GetWeights', PACKAGE = 'spBFA', Alpha, K, M, L)
+GetWeights <- function(Alpha, K, M, L, O) {
+    .Call('_spBFA_GetWeights', PACKAGE = 'spBFA', Alpha, K, M, L, O)
 }
 
-GetlogWeights <- function(Alpha, K, M, L) {
-    .Call('_spBFA_GetlogWeights', PACKAGE = 'spBFA', Alpha, K, M, L)
+GetlogWeights <- function(Alpha, K, M, L, O) {
+    .Call('_spBFA_GetlogWeights', PACKAGE = 'spBFA', Alpha, K, M, L, O)
 }
 
 CholInv <- function(Cov) {

@@ -75,8 +75,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // GetLStarJ
-arma::colvec GetLStarJ(arma::mat const& U, arma::cube const& Weights, int K, int M);
-RcppExport SEXP _spBFA_GetLStarJ(SEXP USEXP, SEXP WeightsSEXP, SEXP KSEXP, SEXP MSEXP) {
+arma::colvec GetLStarJ(arma::mat const& U, arma::cube const& Weights, int K, int M, int O);
+RcppExport SEXP _spBFA_GetLStarJ(SEXP USEXP, SEXP WeightsSEXP, SEXP KSEXP, SEXP MSEXP, SEXP OSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -84,13 +84,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::cube const& >::type Weights(WeightsSEXP);
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetLStarJ(U, Weights, K, M));
+    Rcpp::traits::input_parameter< int >::type O(OSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetLStarJ(U, Weights, K, M, O));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetLambda
-arma::mat GetLambda(arma::mat const& Theta, arma::umat const& Xi, int K, int M);
-RcppExport SEXP _spBFA_GetLambda(SEXP ThetaSEXP, SEXP XiSEXP, SEXP KSEXP, SEXP MSEXP) {
+arma::mat GetLambda(arma::mat const& Theta, arma::umat const& Xi, int K, int M, int O);
+RcppExport SEXP _spBFA_GetLambda(SEXP ThetaSEXP, SEXP XiSEXP, SEXP KSEXP, SEXP MSEXP, SEXP OSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,13 +99,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::umat const& >::type Xi(XiSEXP);
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetLambda(Theta, Xi, K, M));
+    Rcpp::traits::input_parameter< int >::type O(OSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetLambda(Theta, Xi, K, M, O));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetWeights
-arma::cube GetWeights(arma::cube const& Alpha, int K, int M, int L);
-RcppExport SEXP _spBFA_GetWeights(SEXP AlphaSEXP, SEXP KSEXP, SEXP MSEXP, SEXP LSEXP) {
+arma::cube GetWeights(arma::cube const& Alpha, int K, int M, int L, int O);
+RcppExport SEXP _spBFA_GetWeights(SEXP AlphaSEXP, SEXP KSEXP, SEXP MSEXP, SEXP LSEXP, SEXP OSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -112,13 +114,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
     Rcpp::traits::input_parameter< int >::type L(LSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetWeights(Alpha, K, M, L));
+    Rcpp::traits::input_parameter< int >::type O(OSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetWeights(Alpha, K, M, L, O));
     return rcpp_result_gen;
 END_RCPP
 }
 // GetlogWeights
-arma::cube GetlogWeights(arma::cube const& Alpha, int K, int M, int L);
-RcppExport SEXP _spBFA_GetlogWeights(SEXP AlphaSEXP, SEXP KSEXP, SEXP MSEXP, SEXP LSEXP) {
+arma::cube GetlogWeights(arma::cube const& Alpha, int K, int M, int L, int O);
+RcppExport SEXP _spBFA_GetlogWeights(SEXP AlphaSEXP, SEXP KSEXP, SEXP MSEXP, SEXP LSEXP, SEXP OSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -126,7 +129,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
     Rcpp::traits::input_parameter< int >::type L(LSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetlogWeights(Alpha, K, M, L));
+    Rcpp::traits::input_parameter< int >::type O(OSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetlogWeights(Alpha, K, M, L, O));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -170,10 +174,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_SpEXP", (DL_FUNC) &_spBFA_SpEXP, 3},
     {"_spBFA_bfa_sp_Rcpp", (DL_FUNC) &_spBFA_bfa_sp_Rcpp, 8},
     {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 1},
-    {"_spBFA_GetLStarJ", (DL_FUNC) &_spBFA_GetLStarJ, 4},
-    {"_spBFA_GetLambda", (DL_FUNC) &_spBFA_GetLambda, 4},
-    {"_spBFA_GetWeights", (DL_FUNC) &_spBFA_GetWeights, 4},
-    {"_spBFA_GetlogWeights", (DL_FUNC) &_spBFA_GetlogWeights, 4},
+    {"_spBFA_GetLStarJ", (DL_FUNC) &_spBFA_GetLStarJ, 5},
+    {"_spBFA_GetLambda", (DL_FUNC) &_spBFA_GetLambda, 5},
+    {"_spBFA_GetWeights", (DL_FUNC) &_spBFA_GetWeights, 5},
+    {"_spBFA_GetlogWeights", (DL_FUNC) &_spBFA_GetlogWeights, 5},
     {"_spBFA_CholInv", (DL_FUNC) &_spBFA_CholInv, 1},
     {"_spBFA_Inv3", (DL_FUNC) &_spBFA_Inv3, 1},
     {"_spBFA_makeSymm", (DL_FUNC) &_spBFA_makeSymm, 1},

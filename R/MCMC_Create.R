@@ -2,10 +2,11 @@
 CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure, SpatialStructure) {
 
   ###Data objects
+  M <- dim(Y)[1] #number of spatial locations
+  O <- dim(Y)[2] #number of spatial observations
+  Nu <- dim(Y)[3] #number of visits
+  N <- length(Y) #total observations
   YObserved <- Y / ScaleY #scale observed data
-  N <- length(YObserved)  #total observations
-  M <- dim(Dist)[1] #number of spatial locations
-  Nu <- N / M #number of visits
 
   ###Upper bound of L
   if (is.finite(L)) {
@@ -13,25 +14,29 @@ CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure,
     LInf <- 0
   }
   if (is.infinite(L)) {
-    L <- M
+    L <- M * O
     LInf <- 1
   }
   
   ###Dynamic Objects (updated with data augmentation)
-  YStar <- matrix(YObserved, ncol = 1)
-  YStarWide <- matrix(YStar, nrow = M, ncol = Nu)
-
+  YStar <- matrix(as.numeric(YObserved), ncol = 1)
+  YStarWide <- matrix(YStar, nrow = M * O, ncol = Nu)
+  
   ###Temporal distance matrix
   TimeDist <- abs(outer(Time, Time, "-"))
   
   ###Matrix Objects
   EyeNu <- diag(Nu)
   EyeM <- diag(M)
+  EyeO <- diag(O)
+  EyeOM <- diag(O * M)
   SeqL <- matrix(0:(L - 1), ncol = 1)
   EyeKbyNu <- diag(K * Nu)
   ZeroKbyNu <- matrix(0, nrow = K * Nu)
   ZeroM <- matrix(0, nrow = M)
+  ZeroOM <- matrix(0, nrow = O * M)
   OneNu <- matrix(1, nrow = Nu)
+  OneO <- matrix(1, nrow = O)
   
   ###Assign temporal correlation structure
   if (TemporalStructure == "exponential") TempCorInd <- 0
@@ -42,10 +47,20 @@ CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure,
   if (SpatialStructure == "discrete") SpCorInd <- 1
   
   ###Family indicator
-  if (Family == "normal") FamilyInd <- 0
-  if (Family == "probit") FamilyInd <- 1
-  if (Family == "tobit") FamilyInd <- 2
-
+  FamilyInd <- numeric(length = O)
+  if (length(Family) == O) {
+    for (o in 1:O) {
+      if (Family[o] == "normal") FamilyInd[o] <- 0
+      if (Family[o] == "probit") FamilyInd[o] <- 1
+      if (Family[o] == "tobit") FamilyInd[o] <- 2
+    }
+  }
+  if (length(Family) == 1) {
+    if (Family == "normal") FamilyInd <- rep(0, O)
+    if (Family == "probit") FamilyInd <- rep(1, O)
+    if (Family == "tobit") FamilyInd <- rep(2, O)
+  }
+    
   ###Make parameters global
   DatObj <- list()
   DatObj$YObserved <- YObserved
@@ -58,23 +73,27 @@ CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure,
   DatObj$Nu <- Nu
   DatObj$K <- K
   DatObj$L <- L
+  DatObj$O <- O
   DatObj$FamilyInd <- FamilyInd
   DatObj$Time <- Time
   DatObj$TempCorInd <- TempCorInd
   DatObj$SpCorInd <- SpCorInd
   DatObj$TimeDist <- TimeDist
   DatObj$EyeNu <- EyeNu
+  DatObj$EyeO <- EyeO
   DatObj$SeqL <- SeqL
   DatObj$EyeM <- EyeM
+  DatObj$EyeOM <- EyeOM
   DatObj$EyeKbyNu <- EyeKbyNu
   DatObj$ZeroKbyNu <- ZeroKbyNu
   DatObj$ZeroM <- ZeroM
+  DatObj$ZeroOM <- ZeroOM
   DatObj$OneNu <- OneNu
+  DatObj$OneO <- OneO
   DatObj$LInf <- LInf
   return(DatObj)
 
 }
-
 
 
 
@@ -83,6 +102,7 @@ CreateHyPara <- function(Hypers, DatObj) {
 
   ###Set data objects
   K <- DatObj$K
+  O <- DatObj$O
   TempCorInd <- DatObj$TempCorInd
   SpCorInd <- DatObj$SpCorInd
   TimeDist <- DatObj$TimeDist 
@@ -101,21 +121,21 @@ CreateHyPara <- function(Hypers, DatObj) {
     B <- 1
   }
   
-  ###Set hyperparameters for Kappa2
-  if ("Kappa2" %in% UserHypers) {
-    C <- Hypers$Kappa2$C
-    D <- Hypers$Kappa2$D
+  ###Set hyperparameters for Kappa
+  if ("Kappa" %in% UserHypers) {
+    SmallUpsilon <- Hypers$Kappa$SmallUpsilon
+    BigTheta <- Hypers$Kappa$BigTheta
   }
-  if (!("Kappa2" %in% UserHypers)) {
-    C <- 1
-    D <- 1
+  if (!("Kappa" %in% UserHypers)) {
+    SmallUpsilon <- O + 1
+    BigTheta <- diag(O)
   }
 
   ###Set hyperparameters for Rho
   if ("Rho" %in% UserHypers) {
     if (SpCorInd == 0) { # continuous
-      APsi <- Hypers$Rho$ARho
-      BPsi <- Hypers$Rho$BRho
+      ARho <- Hypers$Rho$ARho
+      BRho <- Hypers$Rho$BRho
     }
     if (SpCorInd == 1) { # discrete
       ARho <- 0 #null values, because Rho is fixed
@@ -130,8 +150,8 @@ CreateHyPara <- function(Hypers, DatObj) {
       BRho <- -log(0.01) / minDiff #shortest diff goes down to 1%
     }
     if (SpCorInd == 1) { # discrete
-      APsi <- 0 #null values, because Rho is fixed
-      BPsi <- 1
+      ARho <- 0 #null values, because Rho is fixed
+      BRho <- 1
     }
   }
   
@@ -191,8 +211,8 @@ CreateHyPara <- function(Hypers, DatObj) {
   HyPara <- list()
   HyPara$A <- A
   HyPara$B <- B
-  HyPara$C <- C
-  HyPara$D <- D
+  HyPara$SmallUpsilon <- SmallUpsilon
+  HyPara$BigTheta <- BigTheta
   HyPara$A1 <- A1
   HyPara$A2 <- A2
   HyPara$APsi <- APsi
@@ -255,9 +275,11 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   M <- DatObj$M
   L <- DatObj$L
   Nu <- DatObj$Nu
+  O <- DatObj$O
   TempCorInd <- DatObj$TempCorInd
   TimeDist <- DatObj$TimeDist
   EyeNu <- DatObj$EyeNu
+  EyeO <- DatObj$EyeO
   SpCorInd <- DatObj$SpCorInd
   SpDist <- DatObj$SpDist
   
@@ -274,9 +296,9 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   if ("Sigma2" %in% UserStarters) Sigma2 <- matrix(Starting$Sigma2, ncol = 1, nrow = M)
   if ((!"Sigma2" %in% UserStarters)) Sigma2 <- matrix(1, ncol = 1, nrow = M)
 
-  ###Set initial values of Kappa2
-  if ("Kappa2" %in% UserStarters) Kappa2 <- Starting$Kappa2
-  if ((!"Kappa2" %in% UserStarters)) Kappa2 <- 1
+  ###Set initial values of Kappa
+  if ("Kappa" %in% UserStarters) Kappa <- Starting$Kappa
+  if ((!"Kappa" %in% UserStarters)) Kappa <- diag(O)
   
   ###Set initial values of Rho
   if ("Rho" %in% UserStarters) {
@@ -330,66 +352,85 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   Theta <- apply(sqrt(1 / Tau), 1, function(x) rnorm(L, 0, x))
   
   ###Create label parameters
-  Xi <- matrix(0, nrow = M, ncol = K)
-  Lambda <- matrix(nrow = M, ncol = K)
-  for (i in 1:M) {
-    for (j in 1:K) {
-      Lambda[i, j] <- Theta[Xi[i, j] + 1, j]
-    }
+  Xi <- matrix(0, nrow = M * O, ncol = K)
+  Lambda <- matrix(nrow = M * O, ncol = K)
+  for (o in 1:O) {
+    for (i in 1:M) {
+      for (j in 1:K) {
+        Lambda[i + M * (o - 1), j] <- Theta[Xi[i + M * (o - 1), j] + 1, j]
+      }
+    }  
   }
-  
+
   ###Factors
   BigPhi <- matrix(0, nrow = K, ncol = Nu)
   Eta <- matrix(as.numeric(BigPhi), ncol = 1)
   
   ###Probit parameters
-  Alpha <- Weights <- logWeights <- array(0, dim = c(L, M, K))
-  Z <- array(-1, dim = c(L, M, K))
+  Alpha <- Weights <- logWeights <- array(0, dim = c(L, M * O, K))
+  Z <- array(-1, dim = c(L, M * O, K))
   Z[1, , ] <- 1
   logUpperPhiAlpha <- pnorm(Alpha, lower.tail = FALSE, log.p = TRUE)
   UpperPhiAlpha <- pnorm(Alpha, lower.tail = FALSE)
   for (j in 1:K) {
-    for (i in 1:M) {
-      for (l in 1:L) {
-        if (l == 1) {
-          Weights[l, i, j] <- pnorm(Alpha[l, i, j])
-          logWeights[l, i, j] <- pnorm(Alpha[l, i, j], log.p = TRUE)
+    for (o in 1:O) {
+      for (i in 1:M) {
+        Index <- i + M * (o - 1)
+        for (l in 1:L) {
+          if (l == 1) {
+            Weights[l, Index, j] <- pnorm(Alpha[l, Index, j])
+            logWeights[l, Index, j] <- pnorm(Alpha[l, Index, j], log.p = TRUE)
+          }
+          if (l > 1) {
+            Weights[l, Index, j] <- pnorm(Alpha[l, Index, j]) * prod(UpperPhiAlpha[1:(l - 1) , Index, j])
+            logWeights[l, Index, j] <- pnorm(Alpha[l, Index, j], log.p = TRUE) + sum(logUpperPhiAlpha[1:(l - 1), Index, j])
+          }
         }
-        if (l > 1) {
-          Weights[l, i, j] <- pnorm(Alpha[l, i, j]) * prod(UpperPhiAlpha[1:(l - 1) , i, j])
-          logWeights[l, i, j] <- pnorm(Alpha[l, i, j], log.p = TRUE) + sum(logUpperPhiAlpha[1:(l - 1), i, j])
-        }
-      }
+      } 
     }
   }
 
   ###Slice sampling latent parameter
-  U <- matrix(nrow = M, ncol = K)
-  for (j in 1:K) for (i in 1:M) U[i, j] <- runif(1, 0, Weights[Xi[i, j] + 1, i, j])
+  U <- matrix(nrow = M * O, ncol = K)
+  for (j in 1:K) {
+    for (o in 1:O) {
+      for (i in 1:M) {
+        Index <- i + M * (o - 1)
+        U[Index, j] <- runif(1, 0, Weights[Xi[Index, j] + 1, Index, j])
+      }  
+    }
+  }
   
   ###Upper Bounds for latent sampling
   OneMinusUStar <- 1 - apply(U, 2, min)
   LStarJ <- numeric(K)
   for (j in 1:K) {
-    LStarIJ <- numeric(M)
-    for (i in 1:M) {
-      LStarIJ[i] <- which.max(cumsum(Weights[ , i, j]) > OneMinusUStar[j]) - 1
+    LStarOIJ <- numeric(M * O)
+    for (o in 1:O) {
+      for (i in 1:M) {
+        Index <- i + M * (o - 1)
+        LStarOIJ[Index] <- which.max(cumsum(Weights[ , Index, j]) > OneMinusUStar[j]) - 1
+      }
     }
-    LStarJ[j] <- max(LStarIJ)
+    LStarJ[j] <- max(LStarOIJ)
   }
   LStarJ <- matrix(LStarJ, ncol = 1)
 
   ###Marginal covariance
   Sigma <- diag(as.numeric(Sigma2))
   SigmaInv <- diag(as.numeric(1 / Sigma2))
-  BigPsi <- Lambda %*% t(Lambda) + Sigma
+  BigPsi <- Lambda %*% Upsilon %*% t(Lambda) + kronecker(EyeO, Sigma)
   
   ###Temporal parameters
   HPsi <- H(Psi, TempCorInd, TimeDist, Nu)
   CholHPsi <- chol(HPsi)
   HPsiInv <- chol2inv(CholHPsi)
   
-  ###CAR covariance objects
+  ###Spatial covariance objects
+  CholKappa <- chol(Kappa)
+  KappaInv <- chol2inv(CholKappa)
+  
+  ###Spatial correlation objects
   if (SpCorInd == 1) { #discrete
     Dw <- diag(apply(SpDist, 1, sum))
     SpCovInv <- Dw - Rho * SpDist
@@ -405,7 +446,7 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   ###Save parameter objects
   Para <- list()
   Para$Sigma2 <- Sigma2
-  Para$Kappa2 <- Kappa2
+  Para$Kappa <- Kappa
   Para$Rho <- Rho
   Para$Delta <- Delta
   Para$Psi <- Psi
@@ -433,6 +474,8 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   Para$SpCov <- SpCov
   Para$CholSpCov <- CholSpCov
   Para$SpCovInv <- SpCovInv
+  Para$CholKappa <- CholKappa
+  Para$KappaInv <- KappaInv
   return(Para)
 
 }
@@ -447,87 +490,47 @@ CreateDatAug <- function(DatObj) {
   FamilyInd <- DatObj$FamilyInd
   YStarWide <- DatObj$YStarWide
   M <- DatObj$M
+  O <- DatObj$O
   Nu <- DatObj$Nu
+  N <- DatObj$N
 
-  ###Initialize Data Augmentation Object
-  DatAug <- NULL
-
-  ###Normal objects
-  if (FamilyInd == 0) {
-    DatAug$NBelow <- 0
-    DatAug$NAbove <- 0
-    DatAug$WhichBelow <- 0
-    DatAug$WhichAbove <- 0
-    # DatAug$TobitIndeces <- matrix(c(0,0,0,0),2,2)
-    # DatAug$ProbitIndeces <- matrix(c(0,0,0,0),2,2)
-  }
-
-  ###Probit objects
-  if (FamilyInd == 1) {
-    TobitBoolean <- YObserved <= 0
+  ###Initialize Data Augmentation Object with Normality
+  DatAug <- list()
+  DatAug$NBelow <- 0
+  DatAug$NAbove <- 0
+  DatAug$WhichBelow <- 0
+  DatAug$WhichAbove <- 0
+  
+  ###Lower truncation
+  if (any(FamilyInd == 2) | any(FamilyInd == 1)) {
+    TobitBoolean <- matrix(FALSE, ncol = 1, nrow = N)
+    for (o in 1:O) {
+      if (FamilyInd[o] == 2 | FamilyInd[o] == 1) {
+        TobitBooleanCube <- array(FALSE, dim = c(M, O, Nu))
+        TobitBooleanCube[ , o, ] <- TRUE
+        TobitBoolean <- TobitBoolean | matrix(TobitBooleanCube & YObserved <= 0, ncol = 1)
+      }
+    }
     WhichBelow <- which(TobitBoolean)
     NBelow <- length(WhichBelow)
-    TobitBooleanMat <- matrix(TobitBoolean, nrow = M, ncol = Nu)
-    YStarBelow <- list()
-    for (i in 1 : Nu) YStarBelow[[i]] <- YStarWide[!TobitBooleanMat[,i], i]
-    NBelowList <- unlist(lapply(YStarBelow, f<-function(x) M - length(x)))
-    TobitIndeces <- which(TobitBooleanMat, arr.ind = TRUE)
-    TobitIndeces <- TobitIndeces - 1
-    ProbitBoolean <- YObserved > 0
+    DatAug$NBelow <- NBelow
+    DatAug$WhichBelow <- WhichBelow - 1
+  }
+  
+  ###Upper truncation
+  if (any(FamilyInd == 1)) {
+    ProbitBoolean <- matrix(FALSE, ncol = 1, nrow = N)
+    for (o in 1:O) {
+      if (FamilyInd[o] == 1) {
+        ProbitBoolean <- array(FALSE, dim = c(M, O, Nu))
+        ProbitBoolean[ , o, ] <- TRUE
+        ProbitBoolean <- ProbitBoolean | matrix(ProbitBoolean & YObserved > 0, ncol = 1)
+      }
+    }
     WhichAbove <- which(ProbitBoolean)
     NAbove <- length(WhichAbove)
-    ProbitBooleanMat <- matrix(ProbitBoolean, nrow = M, ncol = Nu)
-    YStarAbove <- list()
-    for (i in 1 : Nu) YStarAbove[[i]] <- YStarWide[!ProbitBooleanMat[,i], i]
-    NAboveList <- unlist(lapply(YStarAbove, f<-function(x) M - length(x)))
-    ProbitIndeces <- which(ProbitBooleanMat, arr.ind = TRUE)
-    ProbitIndeces <- ProbitIndeces - 1
-
-    ###Save objects
-    DatAug <- list()
-    DatAug$WhichBelow <- WhichBelow - 1
     DatAug$WhichAbove <- WhichAbove - 1
-    DatAug$NBelow <- NBelow
     DatAug$NAbove <- NAbove
-    DatAug$TobitIndeces <- TobitIndeces
-    DatAug$ProbitIndeces <- ProbitIndeces
-  }
-
-  ###Tobit objects
-  if (FamilyInd == 2) {
-    TobitBoolean <- YObserved <= 0
-    WhichBelow <- which(TobitBoolean)
-    NBelow <- length(WhichBelow)
-    TobitBooleanMat <- matrix(TobitBoolean, nrow = M, ncol = Nu)
-    YStarNonZero <- list()
-    for (i in 1 : Nu) YStarNonZero[[i]] <- YStarWide[!TobitBooleanMat[,i], i]
-    NBelowCount <- unlist(lapply(YStarNonZero, f<-function(x) M - length(x)))
-    TobitIndeces <- which(TobitBooleanMat, arr.ind = TRUE) - 1
-    # TobitIndeces <- TobitIndeces - 1
-    # ZDatAug <- model.matrix(~-1 + as.factor(TobitIndeces[,2]))
-    # attributes(ZDatAug) <- NULL
-    # ZDatAug <- structure(ZDatAug, class = "matrix", dim = c(NBelow, Nu))
-    # WDatAug <- array(FALSE, dim = c(M, M, Nu))
-    # for (i in 1:NBelow) {
-    #   Visit <- TobitIndeces[i, 2] + 1
-    #   Location <- TobitIndeces[i, 1] + 1
-    #   WDatAug[ , Location, Visit] <- rep(TRUE, M)
-    # }
-    # WDatAug <- matrix(which(WDatAug) - 1, ncol = 1)
-
-    ###Save objects
-    DatAug <- list()
-    DatAug$WhichBelow <- WhichBelow - 1
-    DatAug$NBelow <- NBelow
-    DatAug$TobitBooleanMat <- TobitBooleanMat
-    DatAug$YStarNonZero <- YStarNonZero
-    DatAug$NBelowCount <- NBelowCount
-    DatAug$TobitIndeces <- TobitIndeces
-    DatAug$ProbitIndeces <- matrix(c(0,0,0,0),2,2)
-    DatAug$NAbove <- 0
-    DatAug$WhichAbove <- 0
-    # DatAug$ZDatAug <- ZDatAug
-    # DatAug$WDatAug <- WDatAug
   }
   return(DatAug)
 
@@ -604,24 +607,22 @@ CreateStorage <- function(DatObj, McmcObj) {
   M <- DatObj$M
   K <- DatObj$K
   Nu <- DatObj$Nu
+  O <- DatObj$O
 
   ###Set MCMC objects
   NKeep <- McmcObj$NKeep
 
   ###Create storage object 
-  # Lambda: M x K
+  # Lambda: M * O x K
   # Eta: K x Nu
   # Sigma: M
-  # Kappa2: 1
+  # Kappa: O x (O + 1) / 2
   # Rho: 1
   # Delta: K
   # Upsilon: K x (K + 1) / 2
   # Psi: 1
-  # Xi: M * K
-  Out <- matrix(nrow = (M * K + K * Nu + M + 1 + K + ((K + 1) * K) / 2 + 1 + M * K + 1), ncol = NKeep)
+  # Xi: M * O * K
+  Out <- matrix(nrow = (M * O * K + K * Nu + M + ((O + 1) * O) / 2  + K + ((K + 1) * K) / 2 + 1 + M * O * K + 1), ncol = NKeep)
   return(Out)
 
 }
-
-
-

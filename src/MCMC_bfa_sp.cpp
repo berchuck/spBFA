@@ -19,7 +19,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   mcmcobj McmcObj = ConvertMcmcObj(McmcObj_List);
 
   //Set objects to be used in MCMC sampler
-  int FamilyInd = DatObj.FamilyInd;
+  arma::Col<int> FamilyInd = DatObj.FamilyInd;
   int SpCorInd = DatObj.SpCorInd;
   int NTotal = McmcObj.NTotal;
   int NBurn = McmcObj.NBurn;
@@ -37,7 +37,6 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
 
   //Begin MCMC Sampler
   for (int s = 1; s < NTotal + 1; s++) {
-  // for (int s = 1; s < 25; s++) {
 
     //Check for user interrupt every 500 iterations
     if (s % 500 == 0) Rcpp::checkUserInterrupt();
@@ -46,11 +45,10 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     if (LInf == 1) Para = SampleU(DatObj, Para);
     
     // Data Augmentation Step
-    if ((FamilyInd != 0) & (NTrunc > 0)) DatObj = SampleY(DatObj, Para, DatAug);
+    if (any(FamilyInd != 0) & (NTrunc > 0)) DatObj = SampleY(DatObj, Para, DatAug);
     
     //Gibbs step for Theta
     Para = SampleTheta(DatObj, Para);
-    // Rcpp::Rcout << std::fixed << 0 << std::endl;
     
     //Gibbs step for Xi
     Para = SampleXi(DatObj, Para);
@@ -61,8 +59,8 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     //Gibbs step for Alpha
     Para = SampleAlpha(DatObj, Para);
     
-    //Gibbs step for Kappa2
-    Para = SampleKappa2(DatObj, Para, HyPara);
+    //Gibbs step for Kappa
+    Para = SampleKappa(DatObj, Para, HyPara);
     
     //Metropolis step for Rho
     if (SpCorInd == 0) {
@@ -95,7 +93,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     //Store raw samples
     if (std::find(WhichKeep.begin(), WhichKeep.end(), s) != WhichKeep.end())
       RawSamples.cols(find(s == WhichKeep)) = StoreSamples(DatObj, Para);
-
+    
     //Update burn-in progress bar
     if (Interactive) if (std::find(WhichBurnInProgress.begin(), WhichBurnInProgress.end(), s) != WhichBurnInProgress.end())
       UpdateBurnInBar(s, McmcObj);

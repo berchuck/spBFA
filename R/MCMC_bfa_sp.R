@@ -158,16 +158,16 @@ bfa_sp <- function(Y, Dist, Time, K, L = Inf,
                    TemporalStructure = "exponential", SpatialStructure = "discrete") {
   
   ###Function Inputs
-  # Y = Y
-  # Dist = SpDist
+  # Y = Data
+  # Dist = W
   # Time = Time
   # Starting = Starting
   # Hypers = Hypers
   # Tuning = Tuning
   # MCMC = MCMC
-  # Family = "normal"
+  # Family = c("tobit", "normal")
   # TemporalStructure = "exponential"
-  # SpatialStructure = "continuous"
+  # SpatialStructure = "discrete"
   # ScaleY = 1
   # Seed = 54
   # K = K
@@ -221,7 +221,7 @@ bfa_sp <- function(Y, Dist, Time, K, L = Inf,
   spBFA <- list(lambda = Samples$Lambda,
                 eta = Samples$Eta,
                 sigma2 = Samples$Sigma2,
-                kappa2 = Samples$Kappa2,
+                kappa = Samples$Kappa,
                 delta = Samples$Delta,
                 tau = Samples$Tau,
                 upsilon = Samples$Upsilon,
