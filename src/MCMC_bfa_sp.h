@@ -68,7 +68,7 @@ struct metrobj {
   arma::vec OriginalTuners;
 };
 struct para {
-  arma::colvec Sigma2;
+  arma::mat Sigma2;
   arma::colvec Delta;
   arma::mat Kappa;
   double Psi;

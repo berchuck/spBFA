@@ -219,8 +219,8 @@ para SampleSigma2(datobj DatObj, para Para, hypara HyPara) {
     //End loop over locations  
     }
     
-      //Update covariance
-      Cov(arma::span::all, arma::span(o, o), arma::span::all) = arma::repmat(Sigma2.col(c), 1, Nu);
+    //Update covariance
+    Cov(arma::span::all, arma::span(o, o), arma::span::all) = arma::repmat(Sigma2.col(c), 1, Nu);
 
   //End loop over observations 
   }

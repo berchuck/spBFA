@@ -260,10 +260,10 @@ CheckInputs <- function(Y, Dist, Time, K, L, Trials, Starting, Hypers, Tuning, M
           if (Starting$Sigma2 <= 0) stop('Starting: "Sigma2" must be strictly positive')
         }
         if (is.scalar(Starting$Sigma2)) {
-            if (is.na(Starting$Delta)) stop('Starting: "Sigma2" cannot be NA')
-            if (!is.finite(Sigma2$Sigma2)) stop('Starting: "Sigma2" cannot be infinite')
+            if (is.na(Starting$Sigma2)) stop('Starting: "Sigma2" cannot be NA')
+            if (!is.finite(Starting$Sigma2)) stop('Starting: "Sigma2" cannot be infinite')
             if (Starting$Sigma2 < 0) stop('Starting: "Sigma2" must be non-negative')
-          }
+        }
         if ((!is.matrix(Starting$Sigma2)) & (!is.scalar(Starting$Sigma2))) stop('Starting: "Sigma2" must be a scalar or a matrix')
       } else stop('Starting: "Sigma2" does not get included for "binomial" likelihood')
     }

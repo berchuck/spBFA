@@ -142,7 +142,7 @@ metrobj ConvertMetrObj(Rcpp::List MetrObj_List) {
 para ConvertPara(Rcpp::List Para_List) {
 
   //Set objects from List
-  arma::colvec Sigma2 = Para_List["Sigma2"];
+  arma::mat Sigma2 = Para_List["Sigma2"];
   arma::mat Kappa = Para_List["Kappa"];
   double Rho = Para_List["Rho"];
   arma::colvec Delta = Para_List["Delta"];

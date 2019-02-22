@@ -64,13 +64,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // Play
-bool Play(arma::vec X);
-RcppExport SEXP _spBFA_Play(SEXP XSEXP) {
+arma::mat Play(int f, arma::cube Cube);
+RcppExport SEXP _spBFA_Play(SEXP fSEXP, SEXP CubeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(Play(X));
+    Rcpp::traits::input_parameter< int >::type f(fSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type Cube(CubeSEXP);
+    rcpp_result_gen = Rcpp::wrap(Play(f, Cube));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -185,7 +186,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_H", (DL_FUNC) &_spBFA_H, 4},
     {"_spBFA_SpEXP", (DL_FUNC) &_spBFA_SpEXP, 3},
     {"_spBFA_bfa_sp_Rcpp", (DL_FUNC) &_spBFA_bfa_sp_Rcpp, 8},
-    {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 1},
+    {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 2},
     {"_spBFA_GetLStarJ", (DL_FUNC) &_spBFA_GetLStarJ, 5},
     {"_spBFA_GetLambda", (DL_FUNC) &_spBFA_GetLambda, 5},
     {"_spBFA_GetWeights", (DL_FUNC) &_spBFA_GetWeights, 5},

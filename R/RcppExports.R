@@ -17,8 +17,8 @@ bfa_sp_Rcpp <- function(DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAu
     .Call('_spBFA_bfa_sp_Rcpp', PACKAGE = 'spBFA', DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive)
 }
 
-Play <- function(X) {
-    .Call('_spBFA_Play', PACKAGE = 'spBFA', X)
+Play <- function(f, Cube) {
+    .Call('_spBFA_Play', PACKAGE = 'spBFA', f, Cube)
 }
 
 GetLStarJ <- function(U, Weights, K, M, O) {

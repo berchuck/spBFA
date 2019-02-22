@@ -18,24 +18,59 @@ library(spBFA)
 # devtools::submit_cran(path.package) # submit to CRAN without going through checks
 
 ###Format data for MCMC sampler
-library(womblR)
-VFSeries <- VFSeries[order(VFSeries$Visit), ] #sort by visit
-VFSeries <- VFSeries[!VFSeries$Location %in% c(26, 35), ] #remove blind spot locations
-Y <- VFSeries$DLS #assign observed outcome data
+analdata <- read.csv("/Users/sam/Box Sync/Postdoc/Projects/SFA/DataApplication/Data/analdata.csv")
+ID <- unique(analdata$eyeid)
+patdata <- analdata[analdata$eyeid == ID[1], ]
+VF <- t(patdata[, 26:77])
+VF[VF < 0] <- 0
+RNFL <- t(patdata[, 78:129])
+M <- dim(VF)[1]
+Nu <- dim(VF)[2]
 O <- 2
-M <- 52 
-Nu <- dim(VFSeries)[1] / M
-YWide <- matrix(Y, nrow = M, ncol = Nu)
-YWide2 <- YWide + pmax(matrix(sample(-10:10, M * Nu, replace = TRUE), nrow = M, ncol = Nu), 0)
-Data <- array(dim = c(M, O, Nu))
-Data[ , 1, ] <- YWide
-Data[ , 2, ] <- YWide2
-Time <- unique(VFSeries$Time) / 365 #time since first visit
-K <- 5
-L <- Inf
-W <- HFAII_Queen[-c(26, 35), -c(26, 35)] #Visual field adjacency matrix
-Trials <- array(dim = c(M, 1, Nu))
-Trials[ , , ] <- 50
+Y <- array(dim = c(M, O, Nu))
+Y[ , 1, ] <- VF
+Y[ , 2, ] <- RNFL
+Y <- Y / 10 # scale
+Time <- patdata$sapfollowup
+blind_spot <- c(26, 35)
+W <- HFAII_Queen[-blind_spot, -blind_spot]
+TimeDist <- as.matrix(dist(Time))
+BPsi <- log(0.025) / -min(TimeDist[TimeDist > 0])
+APsi <- log(0.975) / -max(TimeDist)
+K <- 10
+Starting <- list(Sigma2 = 1,
+                 Kappa = diag(O),
+                 Delta = 2 * (1:K),
+                 Psi = (APsi + BPsi) / 2,
+                 Upsilon = diag(K))
+Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
+               Kappa = list(SmallUpsilon = O + 1, BigTheta = diag(O)),
+               Delta = list(A1 = 1, A2 = 20),
+               Psi = list(APsi = APsi, BPsi = BPsi),
+               Upsilon = list(Zeta = K + 1, Omega = diag(K)))
+Tuning <- list(Psi = 1)
+MCMC <- list(NBurn = 10000, NSims = 25000, NThin = 5, NPilot = 20)
+reg.bfa_sp <- bfa_sp(Y = Y, Dist = W, Time = Time, K = K, Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, Family = c("tobit", "normal"))
+
+
+# library(womblR)
+# VFSeries <- VFSeries[order(VFSeries$Visit), ] #sort by visit
+# VFSeries <- VFSeries[!VFSeries$Location %in% c(26, 35), ] #remove blind spot locations
+# Y <- VFSeries$DLS #assign observed outcome data
+# O <- 2
+# M <- 52 
+# Nu <- dim(VFSeries)[1] / M
+# YWide <- matrix(Y, nrow = M, ncol = Nu)
+# YWide2 <- YWide + pmax(matrix(sample(-10:10, M * Nu, replace = TRUE), nrow = M, ncol = Nu), 0)
+# Data <- array(dim = c(M, O, Nu))
+# Data[ , 1, ] <- YWide
+# Data[ , 2, ] <- YWide2
+# Time <- unique(VFSeries$Time) / 365 #time since first visit
+# K <- 5
+# L <- Inf
+# W <- HFAII_Queen[-c(26, 35), -c(26, 35)] #Visual field adjacency matrix
+# Trials <- array(dim = c(M, 1, Nu))
+# Trials[ , , ] <- 50
 
 ###Load simulated dataset
 # load("/Volumes/Macintosh HD/Users/sam/Box Sync/Postdoc/Projects/SFA/Simulations/Simulation1/Data/SimData.RData")
@@ -50,6 +85,11 @@ Trials[ , , ] <- 50
 
 ###Bounds for temporal tuning parameter
 TimeDist <- abs(outer(Time, Time, "-"))
+Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
+               Kappa = list(SmallUpsilon = O + 1, BigTheta = diag(O)),
+               Delta = list(A1 = 1, A2 = 20),
+               Psi = list(APsi = APsi, BPsi = BPsi),
+               Upsilon = list(Zeta = K + 1, Omega = diag(K)))
 minDiff <- min(TimeDist[TimeDist > 0])
 maxDiff <- max(TimeDist[TimeDist > 0])
 APsi <- -log(0.95) / maxDiff #longest diff goes up to 95%

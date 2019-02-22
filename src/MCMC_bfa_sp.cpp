@@ -38,8 +38,8 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   //Begin MCMC Sampler
   for (int s = 1; s < NTotal + 1; s++) {
 
-    //Check for user interrupt every 500 iterations
-    if (s % 500 == 0) Rcpp::checkUserInterrupt();
+    //Check for user interrupt every 50 iterations
+    if (s % 50 == 0) Rcpp::checkUserInterrupt();
 
     //Gibbs step for Latent U
     if (LInf == 1) Para = SampleU(DatObj, Para);
