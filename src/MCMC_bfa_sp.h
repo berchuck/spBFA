@@ -13,13 +13,13 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   
 //STRUCT DEFINITIONS
 struct datobj {
-  double ScaleY;
   int N;
   int M;
   int Nu;
   int K;
   int L;
   int O;
+  int C;
   arma::Col<int> FamilyInd;
   int TempCorInd;
   int SpCorInd;
@@ -41,6 +41,8 @@ struct datobj {
   arma::colvec ZeroOM;
   arma::colvec OneNu;
   arma::colvec OneO;
+  arma::cube Trials;
+  arma::cube Chi;
 };
 struct hypara {
   double A;
@@ -81,9 +83,6 @@ struct para {
   arma::colvec Eta;
   arma::cube Alpha;
   arma::cube Z;
-  arma::mat BigPsi;
-  arma::mat Sigma;
-  arma::mat SigmaInv;
   arma::mat HPsi;
   arma::mat CholHPsi;
   arma::mat HPsiInv;
@@ -97,6 +96,7 @@ struct para {
   arma::mat CholSpCov;
   arma::mat CholKappa;
   arma::mat KappaInv;
+  arma::cube Cov;
 };
 struct dataug {
   int NBelow;
@@ -141,6 +141,7 @@ double lndMvn(arma::vec const& Y, arma::vec const& Mu, arma::mat const& Rooti);
 double randuRcpp();
 double rtnormRcpp(double mean, double sd, bool Above);
 arma::vec rtnormRcppMSM(int N, arma::vec const& mean, arma::vec const& sd, double lower, double upper);
+double rPG(int n, double z);
 
 //MCMC CONVERSION FUNCTIONS
 datobj ConvertDatObj(Rcpp::List DatObj_List);
@@ -161,9 +162,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara);
 para SampleUpsilon(datobj DatObj, para Para, hypara HyPara);
 std::pair<para, metrobj> SamplePsi(datobj DatObj, para Para, hypara HyPara, metrobj MetrObj);
 para SampleSigma2(datobj DatObj, para Para, hypara HyPara);
-arma::colvec SampleUpper(datobj DatObj, para Para, dataug DatAug);
-arma::colvec SampleLower(datobj DatObj, para Para, dataug DatAug);
-datobj SampleY(datobj DatObj, para Para, dataug DatAug);
+std::pair<datobj, para> SampleY(datobj DatObj, para Para, dataug DatAug);
 para SampleU(datobj DatObj, para Para);
 std::pair<para, metrobj> SampleRho(datobj DatObj, para Para, hypara HyPara, metrobj MetrObj);
   

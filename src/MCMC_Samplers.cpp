@@ -2,8 +2,40 @@
 #include <RcppArmadillo.h>
 #include "MCMC_bfa_sp.h"
 
+//Function to sample latent polya-gamma process using Gibbs sampling step------------------------------------------------
+arma::mat SampleOmega(int f, datobj DatObj, para Para) {
+  
+  //Set data objects
+  int M = DatObj.M;
+  int Nu = DatObj.Nu;
+  int N = DatObj.N;
+  int O = DatObj.O;
+  arma::mat TrialsMat = DatObj.Trials(arma::span::all, arma::span(f, f), arma::span::all);
+  
+  //Set parameters
+  arma::colvec Mean = Para.Mean;
+  
+  //Moments
+  arma::cube MeanOut(N, 1, 1);
+  MeanOut(arma::span::all, arma::span(0, 0), arma::span(0, 0)) = Mean;
+  MeanOut = arma::reshape(MeanOut, M, O, Nu);
+  arma::mat MeanMat = MeanOut(arma::span::all, arma::span(f, f), arma::span::all);
+
+  //Sample latent Variable from full conditional
+  arma::mat omega(M, Nu);
+  for (arma::uword i = 0; i < M; i++) {
+    for (arma::uword t = 0; t < Nu; t++) {
+      omega(i, t) = rPG(TrialsMat(i, t), MeanMat(i, t));
+    }
+  }
+  return omega;
+  
+}
+
+
+
 //Function to sample latent probit process using Gibbs sampling step------------------------------------------------
-arma::colvec SampleUpper(datobj DatObj, para Para, dataug DatAug) {
+datobj SampleUpper(datobj DatObj, para Para, dataug DatAug) {
   
   //Set data objects
   arma::colvec YStar = DatObj.YStar;
@@ -12,7 +44,7 @@ arma::colvec SampleUpper(datobj DatObj, para Para, dataug DatAug) {
   
   //Set parameters
   arma::colvec Mean = Para.Mean;
-  arma::colvec Sigma2 = Para.Sigma2;
+  arma::cube Cov = Para.Cov;
   
   //Set data augmentation objects
   arma::uvec WhichAbove = DatAug.WhichAbove;
@@ -20,24 +52,25 @@ arma::colvec SampleUpper(datobj DatObj, para Para, dataug DatAug) {
   
   //Moments
   arma::colvec Mu = Mean(WhichAbove);
-  arma::colvec SDFull = arma::kron(OneNu, arma::kron(OneO, arma::sqrt(Sigma2)));
+  arma::colvec SDFull = arma::sqrt(arma::vectorise(Cov));
   arma::colvec SD = SDFull(WhichAbove);
   
   //Sample latent Variable from full conditional
-  for (int i = 0; i < NAbove; i++) {
+  for (arma::uword i = 0; i < NAbove; i++) {
     double Temp = rtnormRcpp(Mu(i), SD(i), false);
     if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), 0, arma::datum::inf);
     if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Probit sampling step. Most likey cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Probit model. Consider scaling towards zero and re-running.");
     YStar(WhichAbove(i)) = Temp;
   }
-  return YStar;
+  DatObj.YStar = YStar;
+  return DatObj;
   
 }
 
 
 
 //Function to sample latent tobit process using Gibbs sampling step------------------------------------------------
-arma::colvec SampleLower(datobj DatObj, para Para, dataug DatAug) {
+datobj SampleLower(datobj DatObj, para Para, dataug DatAug) {
   
   //Set data objects
   arma::colvec YStar = DatObj.YStar;
@@ -46,7 +79,7 @@ arma::colvec SampleLower(datobj DatObj, para Para, dataug DatAug) {
   
   //Set parameters
   arma::colvec Mean = Para.Mean;
-  arma::colvec Sigma2 = Para.Sigma2;
+  arma::cube Cov = Para.Cov;
   
   //Set data augmentation objects
   int NBelow = DatAug.NBelow;
@@ -54,24 +87,25 @@ arma::colvec SampleLower(datobj DatObj, para Para, dataug DatAug) {
   
   //Moments
   arma::colvec Mu = Mean(WhichBelow);
-  arma::colvec SDFull = arma::kron(OneNu, arma::kron(OneO, arma::sqrt(Sigma2)));
+  arma::colvec SDFull = arma::sqrt(arma::vectorise(Cov));
   arma::colvec SD = SDFull(WhichBelow);
   
   //Sample latent Variable from full conditional
-  for (int i = 0; i < NBelow; i++) {
+  for (arma::uword i = 0; i < NBelow; i++) {
     double Temp = rtnormRcpp(Mu(i), SD(i), true);
     if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), -arma::datum::inf, 0);
     if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Tobit/Probit sampling step. Most likely cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Tobit/Probit model. Consider scaling towards zero and re-running.");
     YStar(WhichBelow(i)) = Temp;
   }
-  return YStar;
+  DatObj.YStar = YStar;
+  return DatObj;
   
 }
 
 
 
 //Function to sample latent process from its full conditional------------------------------------------------------
-datobj SampleY(datobj DatObj, para Para, dataug DatAug) {
+std::pair<datobj, para> SampleY(datobj DatObj, para Para, dataug DatAug) {
   
   //Set data objects
   arma::Col<int> FamilyInd = DatObj.FamilyInd;
@@ -79,17 +113,54 @@ datobj SampleY(datobj DatObj, para Para, dataug DatAug) {
   int M = DatObj.M;
   int O = DatObj.O;
   int Nu = DatObj.Nu;
+  arma::cube Chi = DatObj.Chi;
   
-  //Sample latent process
-  arma::vec YStar(N);
-  if (DatAug.NAbove > 0) YStar = SampleUpper(DatObj, Para, DatAug);
-  if (DatAug.NBelow > 0) YStar = SampleLower(DatObj, Para, DatAug);
+  //Set parameter objects
+  arma::cube Cov = Para.Cov;
+  
+  //Begin by updating all Tobit/Probit latent variables
+  if (DatAug.NAbove > 0) DatObj = SampleUpper(DatObj, Para, DatAug);
+  if (DatAug.NBelow > 0) DatObj = SampleLower(DatObj, Para, DatAug);
+  arma::colvec YStar = DatObj.YStar;
+  
+  if (any(FamilyInd == 3)) {
+    
+    //Update Polya-Gamma latent variables
+    arma::cube YStarOut(N, 1, 1);
+    YStarOut(arma::span::all, arma::span(0, 0), arma::span(0, 0)) = YStar;
+    YStarOut = arma::reshape(YStarOut, M, O, Nu);
+  
+    //Loop over latent dimensions
+    for (arma::uword f = 0; f < O; f++) {
+  
+      //Observation specifics
+      int FamInd = FamilyInd(f);
+  
+      //Polya-Gamma latent process updates
+      if (FamInd == 3) {
+        
+        //Sample omega
+        arma::mat chi = Chi(arma::span::all, arma::span(f, f), arma::span::all);
+        arma::mat omega = SampleOmega(f, DatObj, Para); //M x Nu
+        arma::mat omegaInv = arma::pow(omega, -1);
+        
+        //Update Polya-Gamma objects
+        YStarOut(arma::span::all, arma::span(f, f), arma::span::all) = chi % omegaInv;
+        Cov(arma::span::all, arma::span(f, f), arma::span::all) = omegaInv;
+  
+      }
+      
+    //End loop over observation dimension
+    }
+    YStar = arma::vectorise(YStarOut);
+  }
   
   //Save output
   DatObj.YStar = YStar;
   DatObj.YStarWide = arma::reshape(YStar, M * O, Nu);
-  return DatObj;
-  
+  Para.Cov = Cov;
+  return std::pair<datobj, para>(DatObj, Para);
+
 }
 
 
@@ -98,65 +169,65 @@ datobj SampleY(datobj DatObj, para Para, dataug DatAug) {
 para SampleSigma2(datobj DatObj, para Para, hypara HyPara) {
   
   //Set data objects
+  arma::Col<int> FamilyInd = DatObj.FamilyInd;
   int Nu = DatObj.Nu;
   int O = DatObj.O;
   int M = DatObj.M;
+  int C = DatObj.C;
   arma::mat YStarWide = DatObj.YStarWide;
   arma::mat EyeO = DatObj.EyeO;
   
   //Set parameter objects
   arma::colvec Mean = Para.Mean;
   arma::mat MeanMat = arma::reshape(Mean, M * O, Nu);
-  arma::colvec Sigma2 = Para.Sigma2;
+  arma::mat Sigma2 = Para.Sigma2;
   arma::mat Lambda = Para.Lambda;
   arma::mat Upsilon = Para.Upsilon;
+  arma::cube Cov = Para.Cov;
   
   //Set hyperparameter objects
   double A = HyPara.A;
   double B = HyPara.B;
   
   //Shape is constant over locations
-  double Shape = A + 0.5 * Nu * O;
+  double Shape = A + 0.5 * Nu;
   
   //Declarations
   arma::uword Index;
   
-  //Loop over locations
-  for (arma::uword i = 0; i < M; i++) {
+  //Loop over observations
+  arma::uvec NotCount = find(FamilyInd != 3);
+  for (arma::uword c = 0; c < (O - C); c++) {
     
-    //Initialize residuals
-    double Resids = 0;
-
-    //Loop over spatial observations
-    for (arma::uword o = 0; o < O; o++) {
-      
+    //Set the observation 
+    int o = NotCount(c);
+    
+    //Loop over locations
+    for (arma::uword i = 0; i < M; i++) {
+    
       //Location specific objects
       Index = i + M * o;
       arma::rowvec Diff = YStarWide.row(Index) - MeanMat.row(Index);
-
-      //Calculate rate
-      Resids += arma::as_scalar(Diff * arma::trans(Diff));
   
-    //End loop over spatial observations
+      //Calculate rate
+      double Resids = arma::as_scalar(Diff * arma::trans(Diff));
+    
+      //Sample sigma2Io
+      double Rate = B + 0.5 * Resids;
+      Sigma2(i, c) = rigammaRcpp(Shape, Rate);
+      
+    //End loop over locations  
     }
     
-    //Sample sigma2I
-    double Rate = B + 0.5 * Resids;
-    Sigma2(i) = rigammaRcpp(Shape, Rate);
-    
-  //End loop over locations  
+      //Update covariance
+      Cov(arma::span::all, arma::span(o, o), arma::span::all) = arma::repmat(Sigma2.col(c), 1, Nu);
+
+  //End loop over observations 
   }
   
-  //Update dependent parameters 
-  arma::mat Sigma = arma::diagmat(Sigma2);
-  arma::mat SigmaInv = arma::diagmat(1 / Sigma2);
-  arma::mat BigPsi = Lambda * Upsilon * arma::trans(Lambda) + arma::kron(EyeO, Sigma);
-    
   //Update parameters object
   Para.Sigma2 = Sigma2;
-  Para.Sigma = Sigma;
-  Para.SigmaInv = SigmaInv;
-  Para.BigPsi = BigPsi;
+  Para.Cov = Cov;
   return Para;
   
 }
@@ -288,8 +359,7 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   arma::mat BigPhi = Para.BigPhi;
   arma::mat HPsiInv = Para.HPsiInv;
   arma::mat Lambda = Para.Lambda;
-  arma::mat Sigma = Para.Sigma;
-  
+
   //Set hyperparameter objects
   double Zeta = HyPara.Zeta;
   arma::mat Omega = HyPara.Omega;
@@ -306,7 +376,6 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   //Update parameters object
   Para.Upsilon = Upsilon;
   Para.UpsilonInv = UpsilonInv;
-  Para.BigPsi = Lambda * Upsilon * arma::trans(Lambda) + arma::kron(EyeO, Sigma);
   return Para;
 }
 
@@ -318,25 +387,59 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   //Set data objects
   arma::mat EyeNu = DatObj.EyeNu;
   arma::colvec YStar = DatObj.YStar;
+  arma::mat YStarWide = DatObj.YStarWide;
   int K = DatObj.K;
+  int N = DatObj.N;
   int Nu = DatObj.Nu;
   arma::mat EyeO = DatObj.EyeO;
+  arma::Col<int> FamilyInd = DatObj.FamilyInd;
   
   //Set parameters
   arma::mat Lambda = Para.Lambda;
-  arma::mat SigmaInv = Para.SigmaInv;
+  arma::mat Sigma2 = Para.Sigma2;
+  arma::cube Cov = Para.Cov;
+  arma::mat HPsi = Para.HPsi;
   arma::mat HPsiInv = Para.HPsiInv;
   arma::mat UpsilonInv = Para.UpsilonInv;
+
+  //If there are count variables
+  arma::colvec Mean(N), Eta(Nu * K);
+  arma::mat BigPhi(K, Nu);
+  if (any(FamilyInd == 3)) {
+    
+    //Loop over t
+    for (arma::uword t = 0; t < Nu; t++) {
+      
+      //Sample EtaT
+      arma::mat SigmaTInv = arma::diagmat(arma::vectorise(1 / Cov.slice(t)));
+      arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaTInv;
+      arma::mat CovEtaT = CholInv(tLambdaSigmaInv * Lambda + UpsilonInv / HPsi(t, t));
+      arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * YStarWide.col(t));
+      BigPhi.col(t) = rmvnormRcpp(1, MeanEtaT, CovEtaT);
+     
+    //End loop over visits 
+    }
+    
+    //Update parameters dependent on delta
+    Eta = arma::vectorise(BigPhi);
+    Mean = arma::kron(EyeNu, Lambda) * Eta;
+    
+  } else{
+    
+    //Get SigmaInv
+    arma::mat SigmaInv = arma::diagmat(1 / arma::vectorise(Sigma2));
   
-  //Sample eta
-  arma::mat tLambdaSigmaInv = arma::trans(Lambda) * arma::kron(EyeO, SigmaInv);
-  arma::mat CovEta = CholInv(arma::kron(EyeNu, tLambdaSigmaInv * Lambda) + arma::kron(HPsiInv, UpsilonInv));
-  arma::colvec MeanEta = CovEta * arma::kron(EyeNu, tLambdaSigmaInv) * YStar;
-  arma::colvec Eta = rmvnormRcpp(1, MeanEta, CovEta);
-  
-  //Update parameters dependent on delta
-  arma::mat BigPhi = arma::reshape(Eta, K, Nu);
-  arma::mat Mean = arma::kron(EyeNu, Lambda) * Eta;
+    //Sample eta
+    arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaInv;
+    arma::mat CovEta = CholInv(arma::kron(EyeNu, tLambdaSigmaInv * Lambda) + arma::kron(HPsiInv, UpsilonInv));
+    arma::colvec MeanEta = CovEta * arma::kron(EyeNu, tLambdaSigmaInv) * YStar;
+    arma::colvec Eta = rmvnormRcpp(1, MeanEta, CovEta);
+    
+    //Update parameters dependent on delta
+    BigPhi = arma::reshape(Eta, K, Nu);
+    Mean = arma::kron(EyeNu, Lambda) * Eta;
+    
+  }
   
   //Update parameters object
   Para.Eta = Eta;
@@ -756,9 +859,8 @@ para SampleXi(datobj DatObj, para Para) {
   arma::cube logWeights = Para.logWeights;
   arma::mat Lambda = Para.Lambda;
   arma::mat BigPhi = Para.BigPhi;
-  arma::colvec Sigma2 = Para.Sigma2;
+  arma::cube Cov = Para.Cov;
   arma::mat Theta = Para.Theta;
-  arma::mat Sigma = Para.Sigma;
   arma::colvec Eta = Para.Eta;
   arma::mat Upsilon = Para.Upsilon;
   arma::vec LStarJ = Para.LStarJ;
@@ -782,13 +884,15 @@ para SampleXi(datobj DatObj, para Para) {
     //Loop over spatial observations
     for (arma::uword o = 0; o < O; o++) {
     
+      arma::mat CovO = Cov(arma::span::all, arma::span(o, o), arma::span::all);
+      
       //Loop over locations M
       for (arma::uword i = 0; i < M; i++) {
         
         //Get location specific objects
         Index = i + M * o;
         arma::colvec logWeightsOIJ = logWeightsJ.col(Index);
-        double Sigma2I = arma::as_scalar(Sigma2.row(i));
+        arma::rowvec CovOI = CovO.row(i);
         arma::rowvec LambdaOI = Lambda.row(Index);
         double UOIJ = UJ(Index);
         
@@ -803,8 +907,9 @@ para SampleXi(datobj DatObj, para Para) {
             //Obtain the un-normalized (raw) probabilities on the log scale
             LambdaOI(j) = ThetaJ(l);
             arma::rowvec Resid = YStarWide.row(Index) - LambdaOI * BigPhi;
+            Resid = Resid % (1 / arma::sqrt(CovOI));
             double ResidQ = arma::as_scalar(Resid * arma::trans(Resid));
-            double Likelihood = -0.5 * (ResidQ / Sigma2I);
+            double Likelihood = -0.5 * ResidQ;
             double logWeightsOIJL = logWeightsOIJ(l);
             logProbsRaw(l) = logWeightsOIJL + Likelihood;
             
@@ -820,8 +925,9 @@ para SampleXi(datobj DatObj, para Para) {
             if (Include) {
               LambdaOI(j) = ThetaJ(l);
               arma::rowvec Resid = YStarWide.row(Index) - LambdaOI * BigPhi;
+              Resid = Resid % (1 / arma::sqrt(CovOI));
               double ResidQ = arma::as_scalar(Resid * arma::trans(Resid));
-              double Likelihood = -0.5 * (ResidQ / Sigma2I);
+              double Likelihood = -0.5 * ResidQ;
               logProbsRaw(l) = Likelihood;
             }
             
@@ -866,7 +972,6 @@ para SampleXi(datobj DatObj, para Para) {
   //Update parameters object
   Para.Xi = Xi;
   Para.Lambda = Lambda;
-  Para.BigPsi = Lambda * Upsilon * arma::trans(Lambda) + arma::kron(EyeO, Sigma);
   Para.Mean = arma::kron(EyeNu, Lambda) * Eta;
   return Para;
   
@@ -880,6 +985,9 @@ para SampleTheta(datobj DatObj, para Para) {
   int K = DatObj.K;
   int L = DatObj.L;
   int LInf = DatObj.LInf;
+  int M = DatObj.M;
+  int O = DatObj.O;
+  int Nu = DatObj.Nu;
   arma::mat YStarWide = DatObj.YStarWide;
   arma::mat EyeNu = DatObj.EyeNu;
   arma::mat EyeO = DatObj.EyeO;
@@ -889,12 +997,11 @@ para SampleTheta(datobj DatObj, para Para) {
   arma::mat BigPhi = Para.BigPhi;
   arma::umat Xi = Para.Xi;
   arma::mat Lambda = Para.Lambda;
-  arma::colvec Sigma2 = Para.Sigma2;
-  arma::colvec Sigma2Long = arma::kron(OneO, Sigma2);
+  arma::cube Cov = Para.Cov;
+  arma::mat CovMat = arma::reshape(arma::vectorise(Cov), M * O, Nu);
   arma::vec Tau = Para.Tau;
   arma::mat Theta = Para.Theta;
   arma::colvec Eta = Para.Eta;
-  arma::mat Sigma = Para.Sigma;
   arma::colvec LStarJ = Para.LStarJ;
   arma::mat Upsilon = Para.Upsilon;
   
@@ -930,13 +1037,13 @@ para SampleTheta(datobj DatObj, para Para) {
       if (NJL > 0) {
         
         //Cluster l specific objects
-        arma::colvec Sigma2InvL = 1 / Sigma2Long(WhichJL);
+        arma::mat CovInvL = 1 / CovMat.rows(WhichJL);
         arma::mat YJL = YStarWide.rows(WhichJL);
         arma::mat LambdaJL = LambdaMinusJ.rows(WhichJL);
         
         //Sample theta
-        double ResidsJL = arma::as_scalar(arma::trans((YJL - LambdaJL * BigPhiMinusJ) * EtaJ) * Sigma2InvL);
-        double VarThetaJL = arma::as_scalar(1 / ((arma::trans(EtaJ) * EtaJ) * arma::sum(Sigma2InvL) + TauJ));
+        double ResidsJL = arma::as_scalar(arma::sum((YJL - LambdaJL * BigPhiMinusJ) % CovInvL, 0) * EtaJ);
+        double VarThetaJL = arma::as_scalar(1 / (arma::sum(CovInvL, 0) * (EtaJ % EtaJ) + TauJ));
         double MeanThetaJL = VarThetaJL * ResidsJL;
         ThetaJL = arma::as_scalar(rnormRcpp(1, MeanThetaJL, sqrt(VarThetaJL)));
         
@@ -955,13 +1062,11 @@ para SampleTheta(datobj DatObj, para Para) {
   
   //Final updates
   arma::colvec Mean = arma::kron(EyeNu, Lambda) * Eta;
-  arma::mat BigPsi = Lambda * Upsilon * arma::trans(Lambda) + arma::kron(EyeO, Sigma);
-  
+
   //Update parameters object
   Para.Theta = Theta;
   Para.Lambda = Lambda;
   Para.Mean = Mean;
-  Para.BigPsi = BigPsi;
   return Para;
   
 }

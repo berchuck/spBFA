@@ -167,6 +167,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// helloPG
+SEXP helloPG(int n, double z);
+RcppExport SEXP _spBFA_helloPG(SEXP nSEXP, SEXP zSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type z(zSEXP);
+    rcpp_result_gen = Rcpp::wrap(helloPG(n, z));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_GetRooti", (DL_FUNC) &_spBFA_GetRooti, 2},
@@ -181,6 +193,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_CholInv", (DL_FUNC) &_spBFA_CholInv, 1},
     {"_spBFA_Inv3", (DL_FUNC) &_spBFA_Inv3, 1},
     {"_spBFA_makeSymm", (DL_FUNC) &_spBFA_makeSymm, 1},
+    {"_spBFA_helloPG", (DL_FUNC) &_spBFA_helloPG, 2},
     {NULL, NULL, 0}
 };
 

@@ -117,11 +117,12 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   int K = DatObj.K;
   int Nu = DatObj.Nu;
   int O = DatObj.O;
+  int C = DatObj.C;
 
   //Set parameter objects
   arma::mat Lambda = Para.Lambda;
   arma::mat BigPhi = Para.BigPhi;
-  arma::colvec Sigma2 = Para.Sigma2;
+  arma::mat Sigma2 = Para.Sigma2;
   arma::mat Kappa = Para.Kappa;
   arma::colvec Delta = Para.Delta;
   arma::mat Upsilon = Para.Upsilon;
@@ -132,7 +133,7 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   //Save raw samples
   int counter = 0;
   arma::uword Index;
-  arma::colvec col(O * M * K + K * Nu + M + ((O + 1) * O) / 2 + K + ((K + 1) * K) / 2 + 1 + O * M * K + 1);
+  arma::colvec col(O * M * K + K * Nu + M * (O - C) + ((O + 1) * O) / 2 + K + ((K + 1) * K) / 2 + 1 + O * M * K + 1);
   for (arma::uword o = 0; o < O; o++) {
     for (arma::uword i = 0; i < M; i++) {
       Index = i + M * o;
@@ -148,9 +149,11 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
       counter++;
     }
   }
-  for (arma::uword i = 0; i < M; i++) {
-    col(counter) = Sigma2(i);
-    counter++;
+  for (arma::uword c = 0; c < (O - C); c++) {
+    for (arma::uword i = 0; i < M; i++) {
+      col(counter) = Sigma2(i, c);
+      counter++;
+    }
   }
   for (arma::uword i = 0; i < O; i++) {
     for (arma::uword j = 0; j <= i; j++) {

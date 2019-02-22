@@ -1,13 +1,13 @@
 ###Function for reading in sampler inputs and creating a list object that contains all relavent data objects--------------------
-CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure, SpatialStructure) {
+CreateDatObj <- function(Y, Dist, Time, Trials, K, L, Family, TemporalStructure, SpatialStructure) {
 
   ###Data objects
   M <- dim(Y)[1] #number of spatial locations
   O <- dim(Y)[2] #number of spatial observations
   Nu <- dim(Y)[3] #number of visits
   N <- length(Y) #total observations
-  YObserved <- Y / ScaleY #scale observed data
-
+  YObserved <- Y #observed data
+  
   ###Upper bound of L
   if (is.finite(L)) {
     L <- L
@@ -53,18 +53,40 @@ CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure,
       if (Family[o] == "normal") FamilyInd[o] <- 0
       if (Family[o] == "probit") FamilyInd[o] <- 1
       if (Family[o] == "tobit") FamilyInd[o] <- 2
+      if (Family[o] == "binomial") FamilyInd[o] <- 3
     }
   }
   if (length(Family) == 1) {
     if (Family == "normal") FamilyInd <- rep(0, O)
     if (Family == "probit") FamilyInd <- rep(1, O)
     if (Family == "tobit") FamilyInd <- rep(2, O)
+    if (Family == "binomial") FamilyInd <- rep(3, O)
+  }
+    
+  ###Assess the number of trials
+  C <- sum(FamilyInd == 3)
+  if (!is.null(Trials)) {
+    if (!dim(Trials)[1] == M) stop('The first dimension of Trials must be the number of locations: ', M)
+    if (!dim(Trials)[2] == C) stop('The second dimension of Trials must be the number of times "binomial" is used for the Family: ', C)
+    if (!dim(Trials)[3] == Nu) stop('The third dimension of Trials must be the number of temporal observations: ', Nu)
+    TrialsTemp <- array(dim = c(M, O, Nu))
+    counter <- 1
+    for (o in 1:O) {
+      if (FamilyInd[o] == 3) {
+        TrialsTemp[ , o, ] <- Trials[ , counter, ]
+        counter <- counter + 1
+      } else {TrialsTemp[ , o, ] <- 0}
+    }
+    Trials <- TrialsTemp
+    Chi <- YObserved - 0.5 * Trials
+  }
+  if (is.null(Trials)) {
+    Chi <- Trials <- array(1, dim = c(1, 1, 1))
   }
     
   ###Make parameters global
   DatObj <- list()
   DatObj$YObserved <- YObserved
-  DatObj$ScaleY <- ScaleY
   DatObj$YStar <- YStar
   DatObj$YStarWide <- YStarWide
   DatObj$SpDist <- Dist
@@ -74,6 +96,7 @@ CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure,
   DatObj$K <- K
   DatObj$L <- L
   DatObj$O <- O
+  DatObj$C <- C
   DatObj$FamilyInd <- FamilyInd
   DatObj$Time <- Time
   DatObj$TempCorInd <- TempCorInd
@@ -91,6 +114,8 @@ CreateDatObj <- function(Y, Dist, Time, K, L, ScaleY, Family, TemporalStructure,
   DatObj$OneNu <- OneNu
   DatObj$OneO <- OneO
   DatObj$LInf <- LInf
+  DatObj$Trials <- Trials
+  DatObj$Chi <- Chi
   return(DatObj)
 
 }
@@ -107,7 +132,7 @@ CreateHyPara <- function(Hypers, DatObj) {
   SpCorInd <- DatObj$SpCorInd
   TimeDist <- DatObj$TimeDist 
   SpDist <- DatObj$SpDist
-  
+
   ###Which parameters are user defined?
   UserHypers <- names(Hypers)
 
@@ -275,13 +300,18 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   M <- DatObj$M
   L <- DatObj$L
   Nu <- DatObj$Nu
+  N <- DatObj$N
   O <- DatObj$O
+  C <- DatObj$C
   TempCorInd <- DatObj$TempCorInd
   TimeDist <- DatObj$TimeDist
   EyeNu <- DatObj$EyeNu
   EyeO <- DatObj$EyeO
   SpCorInd <- DatObj$SpCorInd
   SpDist <- DatObj$SpDist
+  Trials <- DatObj$Trials
+  YStarWide <- DatObj$YStarWide
+  FamilyInd <- DatObj$FamilyInd
   
   ###Set hyperparameter objects
   APsi <- HyPara$APsi
@@ -293,9 +323,11 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   UserStarters <- names(Starting)
 
   ###Set initial values of Sigma2
-  if ("Sigma2" %in% UserStarters) Sigma2 <- matrix(Starting$Sigma2, ncol = 1, nrow = M)
-  if ((!"Sigma2" %in% UserStarters)) Sigma2 <- matrix(1, ncol = 1, nrow = M)
-
+  if (any(FamilyInd != 3)) {
+    if ("Sigma2" %in% UserStarters) Sigma2 <- matrix(Starting$Sigma2, ncol = (O - C), nrow = M)
+    if ((!"Sigma2" %in% UserStarters)) Sigma2 <- matrix(1, ncol = (O - C), nrow = M)
+  } else {Sigma2 <- matrix(1, nrow = 1, ncol = 1)}
+  
   ###Set initial values of Kappa
   if ("Kappa" %in% UserStarters) Kappa <- Starting$Kappa
   if ((!"Kappa" %in% UserStarters)) Kappa <- diag(O)
@@ -416,11 +448,6 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   }
   LStarJ <- matrix(LStarJ, ncol = 1)
 
-  ###Marginal covariance
-  Sigma <- diag(as.numeric(Sigma2))
-  SigmaInv <- diag(as.numeric(1 / Sigma2))
-  BigPsi <- Lambda %*% Upsilon %*% t(Lambda) + kronecker(EyeO, Sigma)
-  
   ###Temporal parameters
   HPsi <- H(Psi, TempCorInd, TimeDist, Nu)
   CholHPsi <- chol(HPsi)
@@ -443,6 +470,21 @@ CreatePara <- function(Starting, DatObj, HyPara) {
     SpCovInv <- chol2inv(CholSpCov)
   }
   
+  ###Create Poly-Gamma update objects
+  Cov <- array(dim = c(M, O, Nu))
+  NotCount <- which(FamilyInd != 3)
+  count <- 1
+  for (f in 1:O) {
+    if (FamilyInd[f] %in% 0:2) {
+      Cov[ , f, ] <- matrix(Sigma2[, count], nrow = M, ncol = Nu)
+      count <- count + 1
+    }
+    if (FamilyInd[f] == 3) {
+      omega <- matrix(helloPG(M * Nu, 0)$draws, nrow = M, ncol = Nu)
+      Cov[ , f, ] <- 1 / omega
+    }
+  }
+
   ###Save parameter objects
   Para <- list()
   Para$Sigma2 <- Sigma2
@@ -460,9 +502,6 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   Para$Eta <- Eta
   Para$Alpha <- Alpha
   Para$Z <- Z
-  Para$BigPsi <- BigPsi
-  Para$Sigma <- Sigma
-  Para$SigmaInv <- SigmaInv
   Para$HPsi <- HPsi
   Para$CholHPsi <- CholHPsi
   Para$HPsiInv <- HPsiInv
@@ -476,6 +515,7 @@ CreatePara <- function(Starting, DatObj, HyPara) {
   Para$SpCovInv <- SpCovInv
   Para$CholKappa <- CholKappa
   Para$KappaInv <- KappaInv
+  Para$Cov <- Cov
   return(Para)
 
 }
@@ -548,9 +588,9 @@ CreateMcmc <- function(MCMC, DatObj) {
   if ("NBurn" %in% UserMCMC) NBurn <- MCMC$NBurn
   if (!("NBurn" %in% UserMCMC)) NBurn <- 10000
   if ("NSims" %in% UserMCMC) NSims <- MCMC$NSims
-  if (!("NSims" %in% UserMCMC)) NSims <- 100000
+  if (!("NSims" %in% UserMCMC)) NSims <- 10000
   if ("NThin" %in% UserMCMC) NThin <- MCMC$NThin
-  if (!("NThin" %in% UserMCMC)) NThin <- 10
+  if (!("NThin" %in% UserMCMC)) NThin <- 1
   if ("NPilot" %in% UserMCMC) NPilot <- MCMC$NPilot
   if (!("NPilot" %in% UserMCMC)) NPilot <- 20
 
@@ -608,21 +648,23 @@ CreateStorage <- function(DatObj, McmcObj) {
   K <- DatObj$K
   Nu <- DatObj$Nu
   O <- DatObj$O
-
+  FamilyInd <- DatObj$FamilyInd
+  C <- DatObj$C
+  
   ###Set MCMC objects
   NKeep <- McmcObj$NKeep
 
   ###Create storage object 
   # Lambda: M * O x K
   # Eta: K x Nu
-  # Sigma: M
+  # Sigma: M * (O - C)
   # Kappa: O x (O + 1) / 2
   # Rho: 1
   # Delta: K
   # Upsilon: K x (K + 1) / 2
   # Psi: 1
   # Xi: M * O * K
-  Out <- matrix(nrow = (M * O * K + K * Nu + M + ((O + 1) * O) / 2  + K + ((K + 1) * K) / 2 + 1 + M * O * K + 1), ncol = NKeep)
+  Out <- matrix(nrow = (M * O * K + K * Nu + M * (O - C) + ((O + 1) * O) / 2  + K + ((K + 1) * K) / 2 + 1 + M * O * K + 1), ncol = NKeep)
   return(Out)
 
 }

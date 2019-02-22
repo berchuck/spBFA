@@ -6,23 +6,26 @@ FormatSamples <- function(DatObj, RawSamples) {
   K <- DatObj$K
   Nu <- DatObj$Nu
   O <- DatObj$O
+  C <- DatObj$C
   
   ###Format raw samples
   RawSamples <- t(RawSamples)
   Lambda <- RawSamples[, 1:(O * M * K)]
   Eta <- RawSamples[, (O * M * K + 1):(O * M * K + K * Nu)]
-  Sigma2 <- RawSamples[, (O * M * K + K * Nu + 1):(O * M * K + K * Nu + M)]
-  Kappa <- RawSamples[, (O * M * K + K * Nu + M + 1):(O * M * K + K * Nu + M + (O * (O + 1)) / 2)]
-  Delta <- RawSamples[, (O * M * K + K * Nu + M + (O * (O + 1)) / 2 + 1):(O * M * K + K * Nu + M + (O * (O + 1)) / 2 + K)]
+  if (C == O) Sigma2 <- NULL
+  if (C != O) Sigma2 <- RawSamples[, (O * M * K + K * Nu + 1):(O * M * K + K * Nu + M * (O - C))]
+  Kappa <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2)]
+  Delta <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K)]
   Tau <- t(apply(Delta, 1, cumprod))
-  Upsilon <- RawSamples[, (O * M * K + K * Nu + M + (O * (O + 1)) / 2 + K + 1):(O * M * K + K * Nu + M + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2)]
-  Psi <- RawSamples[, (O * M * K + K * Nu + M + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1), drop = FALSE]
-  Xi <- RawSamples[, (O * M * K + K * Nu + M + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + 1):(O * M * K + K * Nu + M + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K)]
-  Rho <- RawSamples[, (O * M * K + K * Nu + M + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K + 1), drop = FALSE]
+  Upsilon <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2)]
+  Psi <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1), drop = FALSE]
+  Xi <- RawSamples[, (O * M * K + K * Nu + M  * (O - C)+ (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K)]
+  Rho <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K + 1), drop = FALSE]
   LambdaInd <- expand.grid(1:K, 1:M, 1:O)
   colnames(Lambda) <- paste0("Lambda_", LambdaInd[, 3], "_", LambdaInd[, 2], "_", LambdaInd[, 1])
   colnames(Eta) <- as.character((apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Eta", 1:Nu, "_"), x))))
-  colnames(Sigma2) <- paste0("Sigma2_", 1:M)
+  if (C != O) Sigma2Ind <- expand.grid(which(DatObj$FamilyInd != 3), 1:M)
+  if (C != O) colnames(Sigma2) <- paste0("Sigma2_", Sigma2Ind[, 1], "_", Sigma2Ind[, 2])
   KappaInd <- which(lower.tri(apply(matrix(1:O, ncol = 1), 1, function(x) paste0(paste0("Kappa", 1:O, "_"), x)), diag = TRUE), arr.ind = TRUE)
   colnames(Kappa) <- apply(matrix(1:O, ncol = 1), 1, function(x) paste0(paste0("Kappa", 1:O, "_"), x))[KappaInd[order(KappaInd[, 1]), ]]
   colnames(Delta) <- paste0("Delta", 1:K)

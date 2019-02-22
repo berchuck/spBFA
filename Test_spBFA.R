@@ -26,14 +26,16 @@ O <- 2
 M <- 52 
 Nu <- dim(VFSeries)[1] / M
 YWide <- matrix(Y, nrow = M, ncol = Nu)
-YWide2 <- YWide + matrix(sample(-5:5, M * Nu, replace = TRUE), nrow = M, ncol = Nu)
+YWide2 <- YWide + pmax(matrix(sample(-10:10, M * Nu, replace = TRUE), nrow = M, ncol = Nu), 0)
 Data <- array(dim = c(M, O, Nu))
 Data[ , 1, ] <- YWide
 Data[ , 2, ] <- YWide2
 Time <- unique(VFSeries$Time) / 365 #time since first visit
-K <- 15
+K <- 5
 L <- Inf
 W <- HFAII_Queen[-c(26, 35), -c(26, 35)] #Visual field adjacency matrix
+Trials <- array(dim = c(M, 1, Nu))
+Trials[ , , ] <- 50
 
 ###Load simulated dataset
 # load("/Volumes/Macintosh HD/Users/sam/Box Sync/Postdoc/Projects/SFA/Simulations/Simulation1/Data/SimData.RData")
@@ -57,14 +59,15 @@ BPsi <- -log(0.01) / minDiff #shortest diff goes down to 1%
 # Beta <- Gamma <- 1
 
 ###Bounds for spatial tuning parameter
-SpDist <- as.matrix(dist(rnorm(100, 10, 1)))
-minDiff <- min(SpDist[SpDist > 0])
-maxDiff <- max(SpDist[SpDist > 0])
-ARho <- -log(0.95) / maxDiff #longest diff goes up to 95%
-BRho <- -log(0.05) / minDiff #shortest diff goes down to 1%
+# SpDist <- as.matrix(dist(rnorm(100, 10, 1)))
+# minDiff <- min(SpDist[SpDist > 0])
+# maxDiff <- max(SpDist[SpDist > 0])
+# ARho <- -log(0.95) / maxDiff #longest diff goes up to 95%
+# BRho <- -log(0.05) / minDiff #shortest diff goes down to 1%
 
 ###Initial values
-Starting <- list(Sigma2 = 1,
+Starting <- list(
+                  # Sigma2 = 1,
                  Kappa = diag(O),
                  Rho = 0.99,
                  Delta = 2 * (1:K),
@@ -72,8 +75,9 @@ Starting <- list(Sigma2 = 1,
                  Upsilon = diag(K))
 
 ###Hyperparameters
-Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
-               Kappa = list(Upsilon = O + 1, Theta = diag(O)),
+Hypers <- list(
+              # Sigma2 = list(A = 0.001, B = 0.001),
+               Kappa = list(SmallUpsilon = O + 1, BigTheta = diag(O)),
                Delta = list(A1 = 1, A2 = 20),
                Psi = list(APsi = APsi, BPsi = BPsi),
                Upsilon = list(Zeta = K + 1, Omega = diag(K)))
@@ -86,10 +90,10 @@ Tuning <- list(Psi = 1)
 MCMC <- list(NBurn = 100, NSims = 250, NThin = 1, NPilot = 2)
 
 ###Fit sampler
-reg.bfa_sp <- bfa_sp(Y = Data, Dist = W, Time = Time, K = K, L = Inf,
+reg.bfa_sp <- bfa_sp(Y = Data, Dist = W, Time = Time, K = K, L = Inf, Trials = Trials,
                      Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC,
                      TemporalStructure = "exponential", SpatialStructure = "discrete",
-                     Family = c("tobit", "normal"))
+                     Family = c("binomial", "normal"))
 
 
 
@@ -194,6 +198,6 @@ save(reg.bfa_sp, file = "/Users/sam/Desktop/out.RData")
 # install.packages("Cairo", lib = "/home/sib2/R")
 # 
 # install.packages("spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
-.libPaths( c( .libPaths(), "/home/sib2/R") )
-install.packages("/home/sib2/Packages/spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
-install.packages("womblR_1.0.3.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
+# .libPaths( c( .libPaths(), "/home/sib2/R") )
+# install.packages("/home/sib2/Packages/spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
+# install.packages("womblR_1.0.3.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)

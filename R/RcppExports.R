@@ -49,3 +49,7 @@ makeSymm <- function(A) {
     .Call('_spBFA_makeSymm', PACKAGE = 'spBFA', A)
 }
 
+helloPG <- function(n, z) {
+    .Call('_spBFA_helloPG', PACKAGE = 'spBFA', n, z)
+}
+

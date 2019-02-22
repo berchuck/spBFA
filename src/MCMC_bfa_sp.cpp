@@ -23,15 +23,15 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   int SpCorInd = DatObj.SpCorInd;
   int NTotal = McmcObj.NTotal;
   int NBurn = McmcObj.NBurn;
-  int NTrunc = DatAug.NBelow + DatAug.NAbove;
   int LInf = DatObj.LInf;
   arma::vec WhichPilotAdapt = McmcObj.WhichPilotAdapt;
   arma::vec WhichKeep = McmcObj.WhichKeep;
   arma::vec WhichBurnInProgress = McmcObj.WhichBurnInProgress;
   arma::vec WhichBurnInProgressInt = McmcObj.WhichBurnInProgressInt;
   arma::vec WhichSamplerProgress = McmcObj.WhichSamplerProgress;
+  std::pair<datobj, para> DAUpdate;
   std::pair<para, metrobj> Update;
-
+  
   //User output
   BeginBurnInProgress(McmcObj, Interactive);
 
@@ -45,7 +45,11 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     if (LInf == 1) Para = SampleU(DatObj, Para);
     
     // Data Augmentation Step
-    if (any(FamilyInd != 0) & (NTrunc > 0)) DatObj = SampleY(DatObj, Para, DatAug);
+    if (any(FamilyInd != 0)) {
+      DAUpdate = SampleY(DatObj, Para, DatAug);
+      DatObj = DAUpdate.first;
+      Para = DAUpdate.second;
+    }
     
     //Gibbs step for Theta
     Para = SampleTheta(DatObj, Para);
@@ -84,7 +88,9 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     MetrObj = Update.second;
     
     //Gibbs step for Sigma2
-    Para = SampleSigma2(DatObj, Para, HyPara);
+    if (any(FamilyInd != 3)) {
+      Para = SampleSigma2(DatObj, Para, HyPara);
+    }
     
     //Pilot adaptation
     if (std::find(WhichPilotAdapt.begin(), WhichPilotAdapt.end(), s) != WhichPilotAdapt.end())

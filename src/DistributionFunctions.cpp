@@ -231,3 +231,17 @@ double pmvnormRcpp(int NBelowVisit, arma::vec const& CondMean, arma::mat const& 
     return Rcpp::as<double>(pmvnormSEXP);
 
 }
+
+
+
+//Sample from a Polya-Gamma(z, n)-----------------------------------------------------
+arma::colvec rpg(arma::colvec shape, arma::colvec scale);
+double rPG(int n, double z) {
+  arma::colvec pgscale(n, arma::fill::ones);
+  arma::colvec pgshape(n);
+  for(arma::uword i = 0; i < n; i++) {
+    pgshape(i) = z;
+  }
+  return arma::as_scalar(arma::sum(rpg(pgscale, pgshape)));
+}
+

@@ -1,4 +1,4 @@
-CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, SpatialStructure, ScaleY) {
+CheckInputs <- function(Y, Dist, Time, K, L, Trials, Starting, Hypers, Tuning, MCMC, Family, TemporalStructure, SpatialStructure) {
   
   ###Data dimensions
   N <- length(as.numeric(Y))
@@ -9,8 +9,8 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
   ###Family
   if ((length(Family) != O) & (length(Family) != 1)) stop(paste0('Family: must have 1 or O = ', O, ' entries'))
   bool <- logical(length = length(Family))
-  for (i in 1:length(Family)) bool[i] <- !(Family[i] %in% c("normal", "probit", "tobit"))
-  if (any(bool)) stop('Family: All entries must be one of "normal", "probit" or "tobit"')
+  for (i in 1:length(Family)) bool[i] <- !(Family[i] %in% c("normal", "probit", "tobit", "binomial"))
+  if (any(bool)) stop('Family: All entries must be one of "normal", "probit", "tobit", or "binomial"')
   
   ###Temporal correlation
   if (!TemporalStructure %in% c("ar1", "exponential")) stop('TemporalStructure: must be one of "ar1" or "exponential"')
@@ -18,13 +18,18 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
   ###Spatial correlation
   if (!SpatialStructure %in% c("discrete", "continuous")) stop('SpatialStructure: must be one of "discrete" or "continuous"')
   
-  ###ScaleY
-  if (missing(ScaleY)) stop("ScaleY: missing")
-  if (!is.scalar(ScaleY)) stop('ScaleY must be a scalar')
-  if (is.na(ScaleY)) stop('ScaleY cannot be NA')
-  if (!is.finite(ScaleY)) stop('ScaleY cannot be infinite')
-  if (!(ScaleY > 0)) stop('ScaleY must be positive')
-
+  ###Data checks for Trials
+  if (is.null(Trials) & any(Family %in% "binomial")) stop('Trials must be specified for Family "binomial"')
+  if (!is.null(Trials)) {
+    if (!any(Family %in% "binomial")) stop('Trials can not be specified without Family = "binomial"')
+    if (!is.array(Trials)) stop('Trials must be an array')
+    # if (length(Trials) != N) stop(paste0('Trials must have exactly ', N, 'values')) # I check dimensions later
+    if (any(is.na(Trials))) stop("Trials may have no missing values")
+    if (any(!is.finite(Trials))) stop("Trials must have strictly finite entries")
+    if (!isTRUE(all(Trials == floor(Trials)))) stop("Trials must have integers only")
+    if (any(Trials < 1)) stop("Trials must contain positive integers only")
+  }
+  
   ###Data checks for Y
   if (!is.array(Y)) stop('Y must be an array')
   if (length(Y) != N) stop(paste0('Y must have exactly ', N, 'values'))
@@ -44,7 +49,17 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
       }
     }
   } 
-
+  if (any(Family == "binomial")) {
+    count <- 1
+    for (o in 1:O) {
+      if (Family[o] == "binomial") {
+        if (any(Y[ , o, ] < 0)) stop('Y: for "binomial" observed data must be non-negative')
+        if (!isTRUE(all(Y[, o, ] == floor(Y[ , o, ])))) stop('Y: for "binomial" observed data must be non-negative integers')
+        if (any(Y[, o, ] > Trials[, count, ])) stop('Y: for "binomial" observed data must be less than the corresponding number of Trials')
+      }
+    }
+  } 
+  
   ###Data checks for Dist
   if (!is.matrix(Dist)) stop('Dist must be a matrix')
   if (!dim(Dist)[1] == M) stop(paste0('Dist must be a ', M ,' x ', M, ' dimensional matrix'))
@@ -53,7 +68,7 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
   if (any(diag(Dist) != 0)) stop('Dist must have only zeros on the diagonal')
   if (!all(!is.na(Dist))) stop('Dist cannot have missing values')
   if (!all(is.finite(Dist))) stop('Dist cannot have infinite values')
-  if (SpatialStructure == "discrete") if (length(table(Dist)) > 2) stop('Dist must only contain binaries (i.e. 0\'s or 1\'s)')
+  if (SpatialStructure == "discrete") if (length(table(Dist)) > 2) stop('Dist must only contain binaries (i.e. 0\'s or 1\'s) for "discrete" space')
   
   ###Data checks for Time
   if (!is.numeric(Time)) stop('Time must be a vector')
@@ -78,21 +93,23 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
   ###Hypers
   if (!is.null(Hypers)) {
     if (!is.list(Hypers)) stop('Hypers must be a list')
-    if (!all(names(Hypers) %in% c("Sigma2", "Kappa", "Rho", "Delta", "Psi", "Upsilon"))) stop('Hypers: Can only contain lists with names "Sigma2", "Kappa" and "Delta", "Psi", or "Upsilon"')
+    if (!all(names(Hypers) %in% c("Sigma2", "Kappa", "Rho", "Delta", "Psi", "Upsilon"))) stop('Hypers: Can only contain lists with names "Sigma2", "Kappa", "Rho", "Delta", "Psi", or "Upsilon"')
 
     ###If Sigma2 hyperparameters are provided
     if ("Sigma2" %in% names(Hypers)) {
-      if (!is.list(Hypers$Sigma2)) stop('Hypers: "Sigma2" must be a list')
-      if (!"A" %in% names(Hypers$Sigma2)) stop('Hypers: "A" value missing')
-      if (!is.scalar(Hypers$Sigma2$A)) stop('Hypers: "A" must be a scalar')
-      if (is.na(Hypers$Sigma2$A)) stop('Hypers: "A" cannot be NA')
-      if (!is.finite(Hypers$Sigma2$A)) stop('Hypers: "A" cannot be infinite')
-      if (Hypers$Sigma2$A <= 0) stop('Hypers: "A" must be strictly positive')
-      if (!"B" %in% names(Hypers$Sigma2)) stop('Hypers: "B" value missing')
-      if (!is.scalar(Hypers$Sigma2$B)) stop('Hypers: "B" must be a scalar')
-      if (is.na(Hypers$Sigma2$B)) stop('Hypers: "B" cannot be NA')
-      if (!is.finite(Hypers$Sigma2$B)) stop('Hypers: "B" cannot be infinite')
-      if (Hypers$Sigma2$B <= 0) stop('Hypers: "B" must be strictly positive')
+      if (any(Family %in% c("normal", "probit", "tobit"))) {
+        if (!is.list(Hypers$Sigma2)) stop('Hypers: "Sigma2" must be a list')
+        if (!"A" %in% names(Hypers$Sigma2)) stop('Hypers: "A" value missing')
+        if (!is.scalar(Hypers$Sigma2$A)) stop('Hypers: "A" must be a scalar')
+        if (is.na(Hypers$Sigma2$A)) stop('Hypers: "A" cannot be NA')
+        if (!is.finite(Hypers$Sigma2$A)) stop('Hypers: "A" cannot be infinite')
+        if (Hypers$Sigma2$A <= 0) stop('Hypers: "A" must be strictly positive')
+        if (!"B" %in% names(Hypers$Sigma2)) stop('Hypers: "B" value missing')
+        if (!is.scalar(Hypers$Sigma2$B)) stop('Hypers: "B" must be a scalar')
+        if (is.na(Hypers$Sigma2$B)) stop('Hypers: "B" cannot be NA')
+        if (!is.finite(Hypers$Sigma2$B)) stop('Hypers: "B" cannot be infinite')
+        if (Hypers$Sigma2$B <= 0) stop('Hypers: "B" must be strictly positive')
+      } else stop('Hypers: "Sigma2" cannot be included for "binomial" likelihood')
     }
     
     ###If Kappa hyperparameters are provided
@@ -116,7 +133,7 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
 
     ###If Rho hyperparameters are provided
     if ("Rho" %in% names(Hypers)) {
-      if (SpatialStructure == "discrete") if (!is.null(Hypers$Rho)) stop('Hypers: When SpatialStructure = "discrete", "Rho" must be NULL')
+      if (SpatialStructure == "discrete") if (!is.null(Hypers$Rho)) stop('Hypers: When SpatialStructure = "discrete", "Rho" must be missing or NULL')
       if (SpatialStructure == "continuous") {
         if (!is.list(Hypers$Rho)) stop('Hypers: "Rho" must be a list')
         if (!"ARho" %in% names(Hypers$Rho)) stop('Hypers: "ARho" value missing')
@@ -217,18 +234,38 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
 
     ###If Delta starting values is provided
     if ("Delta" %in% names(Starting)) {
-      if (!is.numeric(Starting$Delta)) stop('Starting: "Delta" must be a vector')
-      if (length(Starting$Delta) != K) stop('Starting: "Delta" must be length K')
-      if (!all(!is.na(Starting$Delta))) stop('Starting: "Delta" cannot have missing values')
-      if (!all(is.finite(Starting$Delta))) stop('Starting: "Delta" cannot have infinite values')
+      if (is.vector(Starting$Delta)) {
+        if (!is.numeric(Starting$Delta)) stop('Starting: "Delta" must be a vector')
+        if (length(Starting$Delta) != K) stop('Starting: "Delta" must be length K')
+        if (!all(!is.na(Starting$Delta))) stop('Starting: "Delta" cannot have missing values')
+        if (!all(is.finite(Starting$Delta))) stop('Starting: "Delta" cannot have infinite values')
+        if (any(Starting$Delta < 0)) stop('Starting: "Delta" cannot have non-negative values')
+      }
     }
-
+    if (is.scalar(Starting$Delta)) {
+      if (is.na(Starting$Delta)) stop('Starting: "Delta" cannot be NA')
+      if (!is.finite(Starting$Delta)) stop('Starting: "Delta" cannot be infinite')
+      if (Starting$Delta < 0) stop('Starting: "Delta" must be non-negative')
+    }
+    if ((!is.vector(Starting$Delta)) & (!is.scalar(Starting$Delta))) stop('Starting: "Delta" must be a scalar or a vector')
+    
     ###If Sigma2 starting values is provided
     if ("Sigma2" %in% names(Starting)) {
-      if (!is.scalar(Starting$Sigma2)) stop('Starting: "Sigma2" must be a scalar')
-      if (is.na(Starting$Sigma2)) stop('Starting: "Sigma2" cannot be NA')
-      if (!is.finite(Starting$Sigma2)) stop('Starting: "Sigma2" cannot be infinite')
-      if (Starting$Sigma2 <= 0) stop('Starting: "Sigma2" must be strictly positive')
+      if (any(Family %in% c("normal", "probit", "tobit"))) {
+        if (is.matrix(Starting$Sigma2)) {
+          if (!dim(Starting$Sigma2)[1] == M) stop(paste0('Starting: "Sigma2" must have', M, 'rows'))
+          if (!dim(Starting$Sigma2)[2] == (O - C)) stop(paste0('Starting: "Sigma2" must have', O - C, 'columns'))
+          if (!all(!is.na(Starting$Sigma2))) stop('Starting: "Sigma2" cannot have missing values')
+          if (!all(is.finite(Starting$Sigma2))) stop('Starting: "Sigma2" cannot have infinite values')
+          if (Starting$Sigma2 <= 0) stop('Starting: "Sigma2" must be strictly positive')
+        }
+        if (is.scalar(Starting$Sigma2)) {
+            if (is.na(Starting$Delta)) stop('Starting: "Sigma2" cannot be NA')
+            if (!is.finite(Sigma2$Sigma2)) stop('Starting: "Sigma2" cannot be infinite')
+            if (Starting$Sigma2 < 0) stop('Starting: "Sigma2" must be non-negative')
+          }
+        if ((!is.matrix(Starting$Sigma2)) & (!is.scalar(Starting$Sigma2))) stop('Starting: "Sigma2" must be a scalar or a matrix')
+      } else stop('Starting: "Sigma2" does not get included for "binomial" likelihood')
     }
     
     ###If Kappa starting values is provided
@@ -244,16 +281,13 @@ CheckInputs <- function(Y, Dist, Time, K, L, Starting, Hypers, Tuning, MCMC, Fam
 
     ###If Rho starting values is provided
     if ("Rho" %in% names(Starting)) {
+      if (!is.scalar(Starting$Rho)) stop('Starting: "Rho" must be a scalar')
+      if (is.na(Starting$Rho)) stop('Starting: "Rho" cannot be NA')
+      if (!is.finite(Starting$Rho)) stop('Starting: "Rho" cannot be infinite')
       if (SpatialStructure == "discrete") {
-        if (!is.scalar(Starting$Rho)) stop('Starting: "Rho" must be a scalar')
-        if (is.na(Starting$Rho)) stop('Starting: "Rho" cannot be NA')
-        if (!is.finite(Starting$Rho)) stop('Starting: "Rho" cannot be infinite')
         if ((Starting$Rho <= 0) | (Starting$Rho >= 1)) stop('Starting: "Rho" must be in (0, 1) for discrete spatial process')
       }
       if (SpatialStructure == "continuous") {
-        if (!is.scalar(Starting$Rho)) stop('Starting: "Rho" must be a scalar')
-        if (is.na(Starting$Rho)) stop('Starting: "Rho" cannot be NA')
-        if (!is.finite(Starting$Rho)) stop('Starting: "Rho" cannot be infinite')
         # I make sure that Rho is in (ARho, BRho) in CreatePara();
       }
     }

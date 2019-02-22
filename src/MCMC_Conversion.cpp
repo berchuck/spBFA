@@ -5,7 +5,6 @@
 datobj ConvertDatObj(Rcpp::List DatObj_List) {
 
   //Set objects from List
-  double ScaleY = DatObj_List["ScaleY"];
   arma::mat YStarWide = DatObj_List["YStarWide"];
   arma::colvec YStar = DatObj_List["YStar"];
   arma::cube YObserved = DatObj_List["YObserved"];
@@ -18,6 +17,7 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   int M = DatObj_List["M"];
   int Nu = DatObj_List["Nu"];
   int O = DatObj_List["O"];
+  int C = DatObj_List["C"];
   int TempCorInd = DatObj_List["TempCorInd"];
   int SpCorInd = DatObj_List["SpCorInd"];
   arma::Col<int> FamilyInd = DatObj_List["FamilyInd"];
@@ -33,10 +33,11 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   arma::colvec ZeroOM = DatObj_List["ZeroOM"];
   arma::colvec OneNu = DatObj_List["OneNu"];
   arma::colvec OneO = DatObj_List["OneO"];
+  arma::cube Trials = DatObj_List["Trials"];
+  arma::cube Chi = DatObj_List["Chi"];
 
   //Convert to C++ struct
   datobj DatObj;
-  DatObj.ScaleY = ScaleY;
   DatObj.YStarWide = YStarWide;
   DatObj.YStar = YStar;
   DatObj.YObserved = YObserved;
@@ -49,6 +50,7 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.M = M;
   DatObj.Nu = Nu;
   DatObj.O = O;
+  DatObj.C = C;
   DatObj.TempCorInd = TempCorInd;
   DatObj.SpCorInd  = SpCorInd;
   DatObj.FamilyInd = FamilyInd;
@@ -64,6 +66,8 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.ZeroM = ZeroM;
   DatObj.OneNu = OneNu;
   DatObj.OneO = OneO;
+  DatObj.Trials = Trials;
+  DatObj.Chi = Chi;
   return DatObj;
 
 }
@@ -153,9 +157,6 @@ para ConvertPara(Rcpp::List Para_List) {
   arma::colvec Eta = Para_List["Eta"];
   arma::cube Alpha = Para_List["Alpha"];
   arma::cube Z = Para_List["Z"];
-  arma::mat BigPsi = Para_List["BigPsi"];
-  arma::mat Sigma = Para_List["Sigma"];
-  arma::mat SigmaInv = Para_List["SigmaInv"];
   arma::mat HPsi = Para_List["HPsi"];
   arma::mat CholHPsi = Para_List["CholHPsi"];
   arma::mat HPsiInv = Para_List["HPsiInv"];
@@ -169,6 +170,7 @@ para ConvertPara(Rcpp::List Para_List) {
   arma::mat CholSpCov = Para_List["CholSpCov"];
   arma::mat CholKappa = Para_List["CholKappa"];
   arma::mat KappaInv = Para_List["KappaInv"];
+  arma::cube Cov = Para_List["Cov"];
 
   //Convert to C++ struct
   para Para;
@@ -187,9 +189,6 @@ para ConvertPara(Rcpp::List Para_List) {
   Para.Eta = Eta;
   Para.Alpha = Alpha;
   Para.Z = Z;
-  Para.BigPsi = BigPsi;
-  Para.Sigma = Sigma;
-  Para.SigmaInv = SigmaInv;
   Para.HPsi = HPsi;
   Para.CholHPsi = CholHPsi;
   Para.HPsiInv = HPsiInv;
@@ -203,6 +202,7 @@ para ConvertPara(Rcpp::List Para_List) {
   Para.CholSpCov = CholSpCov;
   Para.CholKappa = CholKappa;
   Para.KappaInv = KappaInv;
+  Para.Cov = Cov;
   return Para;
 }
 
