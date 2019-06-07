@@ -143,8 +143,8 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
       }
     }
   }
-  for (arma::uword j = 0; j < K; j++) {
-    for (arma::uword t = 0; t < Nu; t++) {
+  for (arma::uword t = 0; t < Nu; t++) {
+    for (arma::uword j = 0; j < K; j++) {
       col(counter) = BigPhi(j, t);
       counter++;
     }

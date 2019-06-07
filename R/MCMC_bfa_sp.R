@@ -9,19 +9,19 @@
 #'  ordered spatially, second by observation type and then temporally. This means that each slice, Y[ , , t] is an \code{M x O} matrix
 #'  with each column having observations from each spatial location \code{M} of a spatial observation type.
 #'
-#' @param Dist A \code{M x M} dimensional distance matrix. For a \code{discrete} spatial process the matrix contains binary adjacencies that dictating the
+#' @param Dist A \code{M x M} dimensional distance matrix. For a \code{discrete} spatial process the matrix contains binary adjacencies that dictate the
 #'  spatial neigborhood structure and for \code{continuous} spatial processes the matrix should be a continuous distance matrix (e.g., Euclidean).
 #'
-#' @param Time A \code{Nu} dimensional vector containing the observed time points for each
+#' @param Time A \code{Nu} dimensional vector containing the observed time points
 #'  in increasing order.
 #'
-#' @param K A scaler that indicates the dimension (i.e., quantity) of latent factors.
+#' @param K A scalar that indicates the dimension (i.e., quantity) of latent factors.
 #'  
-#' @param L If finite, a scalar indicating the number of clusters for each column of the factor loadings matrix. By default \code{L} is set at \code{Inf}
-#'  so that the Probit stick-breaking process becomes infinite mixture model.
+#' @param L The number of latent clusters. If finite, a scalar indicating the number of clusters for each column of the factor loadings matrix. By default \code{L} is set at \code{Inf}
+#'  so that the Probit stick-breaking process becomes an infinite mixture model.
 #'  
 #' @param Trials A \code{M x C x Nu} dimensional array containing the number of trials for each of the observations in Y. The second dimension 
-#'  now is \code{C} dimensional, which conrresponds to the number of \code{binomial} random variable types. If there is no count data, \code{Trials} should be left missing.
+#'  now is \code{C} dimensional, which corresponds to the number of \code{binomial} random variable types. If there is no count data, \code{Trials} should be left missing.
 #'  
 #' @param Starting Either \code{NULL} or a \code{list} containing starting values
 #'  to be specified for the MCMC sampler. If \code{NULL} is not chosen then none, some or all
@@ -44,7 +44,7 @@
 #'  \code{lists} and may be constructed as follows.
 #'
 #'  \code{Delta} is a \code{list} with two objects, \code{A1} and \code{A2}. These values represent the prior shape 
-#'  parameters for multiplicative Gamma shrinkage prior.
+#'  parameters for the multiplicative Gamma shrinkage prior.
 #'  
 #'  \code{Sigma2} is a \code{list} with two objects, \code{A} and \code{B}. These values represent the shape and scale for the variance parameters.
 #'  
@@ -62,9 +62,11 @@
 #'  inverse-Wishart hyperprior and must be a real number scalar, while \code{Omega} represents
 #'  the scale matrix and must be a \code{K x K} dimensional positive definite matrix.
 #'
-#'  \code{Psi} is a \code{list} with two objects, \code{APsi} and \code{BPsi}. \code{APsi}
+#'  \code{Psi} is a \code{list} with two objects, dependent on if the temporal kernel is \code{exponential} or \code{ar1}.
+#'  For \code{exponential}, the two objects are \code{APsi} and \code{BPsi}. \code{APsi}
 #'  represents the lower bound for the uniform hyperprior, while \code{BPsi} represents
-#'  the upper bound. The bounds must be specified carefully.
+#'  the upper bound. The bounds must be specified carefully. For \code{ar1}, the two objets are \code{Beta} and \code{Gamma}, which are the 
+#'  two shape parameters of a Beta distribution shifted to have domain in (-1, 1). 
 #'  
 #' @param Tuning Either \code{NULL} or a \code{list} containing tuning values
 #'  to be specified for the MCMC Metropolis steps. If \code{NULL} is not chosen then all
@@ -105,7 +107,7 @@
 #' @param Seed An integer value used to set the seed for the random number generator
 #'  (default = 54).
 #'
-#' @details Details of the underlying statistical model proposed by proposed by
+#' @details Details of the underlying statistical model proposed by
 #'  Berchuck et al. 2019. are forthcoming.
 #'
 #' @return \code{bfa_sp} returns a list containing the following objects
@@ -158,7 +160,7 @@
 #' @references Reference for Berchuck et al. 2019 is forthcoming.
 #' @export
 bfa_sp <- function(Y, Dist, Time, K, L = Inf, Trials = NULL,
-                   Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, 
+                   Starting = NULL, Hypers = NULL, Tuning = NULL, MCMC = NULL, 
                    Family = "normal", TemporalStructure = "exponential", SpatialStructure = "discrete", Seed = 54) {
   
   ###Function Inputs
@@ -170,7 +172,7 @@ bfa_sp <- function(Y, Dist, Time, K, L = Inf, Trials = NULL,
   # Hypers = Hypers
   # Tuning = Tuning
   # MCMC = MCMC
-  # Family = c("binomial", "probit")
+  # Family = "binomial"
   # TemporalStructure = "exponential"
   # SpatialStructure = "discrete"
   # Seed = 54

@@ -11,27 +11,30 @@ FormatSamples <- function(DatObj, RawSamples) {
   ###Format raw samples
   RawSamples <- t(RawSamples)
   Lambda <- RawSamples[, 1:(O * M * K)]
-  Eta <- RawSamples[, (O * M * K + 1):(O * M * K + K * Nu)]
+  Eta <- RawSamples[, (O * M * K + 1):(O * M * K + K * Nu), drop = FALSE]
   if (C == O) Sigma2 <- NULL
   if (C != O) Sigma2 <- RawSamples[, (O * M * K + K * Nu + 1):(O * M * K + K * Nu + M * (O - C))]
-  Kappa <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2)]
-  Delta <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K)]
-  Tau <- t(apply(Delta, 1, cumprod))
-  Upsilon <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2)]
+  Kappa <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2), drop = FALSE]
+  Delta <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K), drop = FALSE]
+  Tau <- matrix(t(apply(Delta, 1, cumprod)), ncol = K)
+  Upsilon <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2), drop = FALSE]
   Psi <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1), drop = FALSE]
   Xi <- RawSamples[, (O * M * K + K * Nu + M  * (O - C)+ (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K)]
   Rho <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K + 1), drop = FALSE]
   LambdaInd <- expand.grid(1:K, 1:M, 1:O)
   colnames(Lambda) <- paste0("Lambda_", LambdaInd[, 3], "_", LambdaInd[, 2], "_", LambdaInd[, 1])
-  colnames(Eta) <- as.character((apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Eta", 1:Nu, "_"), x))))
+  EtaInd <- expand.grid(1:K, 1:Nu)
+  colnames(Eta) <- paste0("Eta", EtaInd[, 2], "_", EtaInd[, 1])
   if (C != O) Sigma2Ind <- expand.grid(which(DatObj$FamilyInd != 3), 1:M)
   if (C != O) colnames(Sigma2) <- paste0("Sigma2_", Sigma2Ind[, 1], "_", Sigma2Ind[, 2])
   KappaInd <- which(lower.tri(apply(matrix(1:O, ncol = 1), 1, function(x) paste0(paste0("Kappa", 1:O, "_"), x)), diag = TRUE), arr.ind = TRUE)
-  colnames(Kappa) <- apply(matrix(1:O, ncol = 1), 1, function(x) paste0(paste0("Kappa", 1:O, "_"), x))[KappaInd[order(KappaInd[, 1]), ]]
+  if (O == 1) colnames(Kappa) <- apply(matrix(1:O, ncol = 1), 1, function(x) paste0(paste0("Kappa", 1:O, "_"), x))[KappaInd[order(KappaInd[, 1]), ]][1]
+  if (O > 1) colnames(Kappa) <- apply(matrix(1:O, ncol = 1), 1, function(x) paste0(paste0("Kappa", 1:O, "_"), x))[KappaInd[order(KappaInd[, 1]), ]]
   colnames(Delta) <- paste0("Delta", 1:K)
   colnames(Tau) <- paste0("Tau", 1:K)
   UpsilonInd <- which(lower.tri(apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Upsilon", 1:K, "_"), x)), diag = TRUE), arr.ind = TRUE)
-  colnames(Upsilon) <- apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Upsilon", 1:K, "_"), x))[UpsilonInd[order(UpsilonInd[, 1]), ]]
+  if (K == 1) colnames(Upsilon) <- apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Upsilon", 1:K, "_"), x))[UpsilonInd[order(UpsilonInd[, 1]), ]][1]
+  if (K > 1) colnames(Upsilon) <- apply(matrix(1:K, ncol = 1), 1, function(x) paste0(paste0("Upsilon", 1:K, "_"), x))[UpsilonInd[order(UpsilonInd[, 1]), ]]
   colnames(Psi) <- "Psi"
   colnames(Xi) <- paste0("Xi_", LambdaInd[, 3], "_", LambdaInd[, 2], "_", LambdaInd[, 1])
   colnames(Rho) <- "Rho"

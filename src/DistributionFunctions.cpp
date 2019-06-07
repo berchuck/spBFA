@@ -1,3 +1,4 @@
+#define ARMA_DONT_PRINT_ERRORS //So the cholesky warning is suppressed
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
 
@@ -33,6 +34,13 @@ double dlnorm(double x, double mu, double sigma2) {
 //Function for sampling random standard uniform variable-----------------------------------
 double randuRcpp() {
   return R::runif(0, 1);
+}
+
+
+
+//Function for sampling random standard uniform variable-----------------------------------
+double rbinomRcpp(double n, double p) {
+  return R::rbinom(n, p);
 }
 
 
@@ -104,6 +112,46 @@ arma::mat rmvnormRcpp(int n, arma::vec const& mean, arma::mat const& sigma) {
   Yvec = rnormSNRcpp(n * ncols);
   arma::mat Y = arma::reshape(Yvec, n, ncols);
   return arma::trans(arma::repmat(mean, 1, n).t() + Y * arma::chol(sigma));
+}
+
+
+//Robust sample from a multivariate normal distribution-------------------------------------------
+arma::colvec rmvnormRcppRobust(arma::colvec const& Mu, arma::mat const& Sigma) {
+  int n = Sigma.n_cols;
+  arma::colvec Y(n), Z(n);
+  Z = rnormSNRcpp(n);
+  arma::mat CholSigma;
+  bool Cholesky = arma::chol(CholSigma, Sigma);
+  if (Cholesky) Y = CholSigma * Z + Mu;
+  if (!Cholesky) {
+    arma::vec Zero(n, arma::fill::zeros);
+    arma::vec eigval;
+    arma::mat Q;
+    bool Eigen = arma::eig_sym(eigval, Q, Sigma);
+    if (Eigen) {
+      arma::mat LambdaSqrt = arma::diagmat(arma::sqrt(arma::max(Zero, eigval)));
+      Y = Q * LambdaSqrt * Z + Mu;
+    }
+    if (!Eigen) {
+      arma::mat U;
+      arma::vec s;
+      arma::mat V;
+      bool SVD = arma::svd(U, s, V, Sigma);
+      if (SVD) {
+        arma::mat DSqrt = arma::diagmat(arma::sqrt(arma::max(Zero, s)));
+        Y = U * DSqrt * Z + Mu;
+      }
+      if (!SVD) Rcpp::stop("Cholesky, Eigen, and SVD decompositions failed for Sigma");
+    }
+  }
+  return Y;
+}
+
+
+
+//Sample from a standard normal distribution vectorize-----------------------------------------------
+arma::vec rnormVecRcpp(arma::vec const& mean, arma::vec const& sd) {
+  return mean + rnormSNRcpp(mean.size()) % sd;
 }
 
 

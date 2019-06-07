@@ -63,6 +63,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// EtaKrigging
+arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
+RcppExport SEXP _spBFA_EtaKrigging(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
+    Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
+    rcpp_result_gen = Rcpp::wrap(EtaKrigging(DatObj_List, Para_List, NKeep));
+    return rcpp_result_gen;
+END_RCPP
+}
+// YKrigging
+arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat EtaKrig, int NKeep);
+RcppExport SEXP _spBFA_YKrigging(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP EtaKrigSEXP, SEXP NKeepSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type EtaKrig(EtaKrigSEXP);
+    Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
+    rcpp_result_gen = Rcpp::wrap(YKrigging(DatObj_List, Para_List, EtaKrig, NKeep));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Play
 arma::mat Play(int f, arma::cube Cube);
 RcppExport SEXP _spBFA_Play(SEXP fSEXP, SEXP CubeSEXP) {
@@ -186,6 +213,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_H", (DL_FUNC) &_spBFA_H, 4},
     {"_spBFA_SpEXP", (DL_FUNC) &_spBFA_SpEXP, 3},
     {"_spBFA_bfa_sp_Rcpp", (DL_FUNC) &_spBFA_bfa_sp_Rcpp, 8},
+    {"_spBFA_EtaKrigging", (DL_FUNC) &_spBFA_EtaKrigging, 3},
+    {"_spBFA_YKrigging", (DL_FUNC) &_spBFA_YKrigging, 4},
     {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 2},
     {"_spBFA_GetLStarJ", (DL_FUNC) &_spBFA_GetLStarJ, 5},
     {"_spBFA_GetLambda", (DL_FUNC) &_spBFA_GetLambda, 5},

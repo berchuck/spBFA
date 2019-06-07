@@ -17,6 +17,14 @@ bfa_sp_Rcpp <- function(DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAu
     .Call('_spBFA_bfa_sp_Rcpp', PACKAGE = 'spBFA', DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive)
 }
 
+EtaKrigging <- function(DatObj_List, Para_List, NKeep) {
+    .Call('_spBFA_EtaKrigging', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep)
+}
+
+YKrigging <- function(DatObj_List, Para_List, EtaKrig, NKeep) {
+    .Call('_spBFA_YKrigging', PACKAGE = 'spBFA', DatObj_List, Para_List, EtaKrig, NKeep)
+}
+
 Play <- function(f, Cube) {
     .Call('_spBFA_Play', PACKAGE = 'spBFA', f, Cube)
 }

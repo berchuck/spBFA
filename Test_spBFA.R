@@ -5,6 +5,7 @@ path.package <- "/Users/sam/Documents/Postdoc/Software/spBFA/"
 devtools::load_all(path.package, export_all = TRUE)
 devtools::document(path.package)
 library(spBFA)
+library(womblR)
 
 # devtools::build_win(pkg = path.package)
 # devtools::use_vignette("spCP-example", pkg = path.package)
@@ -21,9 +22,9 @@ library(spBFA)
 analdata <- read.csv("/Users/sam/Box Sync/Postdoc/Projects/SFA/DataApplication/Data/analdata.csv")
 ID <- unique(analdata$eyeid)
 patdata <- analdata[analdata$eyeid == ID[1], ]
-VF <- t(patdata[, 26:77])
+VF <- t(patdata[, 27:78])
 VF[VF < 0] <- 0
-RNFL <- t(patdata[, 78:129])
+RNFL <- t(patdata[, 79:130])
 M <- dim(VF)[1]
 Nu <- dim(VF)[2]
 O <- 2
@@ -49,8 +50,36 @@ Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
                Psi = list(APsi = APsi, BPsi = BPsi),
                Upsilon = list(Zeta = K + 1, Omega = diag(K)))
 Tuning <- list(Psi = 1)
-MCMC <- list(NBurn = 10000, NSims = 25000, NThin = 5, NPilot = 20)
+MCMC <- list(NBurn = 5000, NSims = 5000, NThin = 1, NPilot = 10)
 reg.bfa_sp <- bfa_sp(Y = Y, Dist = W, Time = Time, K = K, Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, Family = c("tobit", "normal"))
+
+save(reg.bfa_sp, file = "/Users/sam/Desktop/reg.RData")
+load(file = "/Users/sam/Desktop/reg.RData")
+
+pred <- predict(reg.bfa_sp, NewTimes = c(5.25))
+
+###Check posterior covariances
+Mean <- matrix(0, nrow = M * O, ncol = Nu)
+for (s in 1:dim(reg.bfa_sp$rho)[1]) {
+  Lambda <- matrix(reg.bfa_sp$lambda[s, ], nrow = M * O, ncol = K, byrow = TRUE)
+  Eta <- matrix(reg.bfa_sp$eta[s, ], ncol = 1)
+  Mean <- Mean + matrix(kronecker(diag(Nu), Lambda) %*% Eta, nrow = M * O, ncol = Nu)
+}
+Mean <- Mean / dim(reg.bfa_sp$rho)[1]
+
+time <- 7
+Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)[1:52 , time]
+PlotSensitivity(Yt * 10, zlim = c(0, 40), bins = 250)
+PlotSensitivity(Mean[1:52, time] * 10, zlim = c(0, 40), bins = 250)
+
+PlotSensitivity(apply(pred$Y$Y9, 2, mean)[1:52] * 10, zlim = c(0, 40), bins = 250)
+
+time <- 7
+Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)[53:104 , time]
+PlotSensitivity(Yt * 10, zlim = c(30, 150), bins = 250, main = "RNFL Thickness (micro meters)", legend.lab = expression(mu~"m"))
+PlotSensitivity(Mean[53:104, time] * 10, zlim = c(30, 150), bins = 250, main = "RNFL Thickness (micro meters)", legend.lab = expression(mu~"m"))
+
+PlotSensitivity(apply(pred$Y$Y8, 2, mean)[53:104] * 10, zlim = c(30, 150), bins = 250, main = "RNFL Thickness (micro meters)", legend.lab = expression(mu~"m"))
 
 
 # library(womblR)

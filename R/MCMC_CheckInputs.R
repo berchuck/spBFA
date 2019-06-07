@@ -31,28 +31,43 @@ CheckInputs <- function(Y, Dist, Time, K, L, Trials, Starting, Hypers, Tuning, M
   }
   
   ###Data checks for Y
+  FamilyInd <- numeric(length = O)
+  if (length(Family) == O) {
+    for (o in 1:O) {
+      if (Family[o] == "normal") FamilyInd[o] <- "normal"
+      if (Family[o] == "probit") FamilyInd[o] <- "probit"
+      if (Family[o] == "tobit") FamilyInd[o] <- "tobit"
+      if (Family[o] == "binomial") FamilyInd[o] <- "binomial"
+    }
+  }
+  if (length(Family) == 1) {
+    if (Family == "normal") FamilyInd <- rep("normal", O)
+    if (Family == "probit") FamilyInd <- rep("probit", O)
+    if (Family == "tobit") FamilyInd <- rep("tobit", O)
+    if (Family == "binomial") FamilyInd <- rep("binomial", O)
+  }
   if (!is.array(Y)) stop('Y must be an array')
   if (length(Y) != N) stop(paste0('Y must have exactly ', N, 'values'))
   if (any(is.na(Y))) stop("Y may have no missing values")
   if (any(!is.finite(Y))) stop("Y must have strictly finite entries")
-  if (any(Family == "probit")) {
+  if (any(FamilyInd == "probit")) {
     for (o in 1:O) {
-      if (Family[o] == "probit") {
+      if (FamilyInd[o] == "probit") {
         if ((sum(Y[ , o, ] == 1) + sum(Y[ , o, ] == 0)) != (Nu * M)) stop('Y: for "probit" observed data must be binary')
       }
     }
   } 
-  if (any(Family == "tobit")) {
+  if (any(FamilyInd == "tobit")) {
     for (o in 1:O) {
-      if (Family[o] == "tobit") {
+      if (FamilyInd[o] == "tobit") {
         if (any(Y[ , o, ] < 0)) stop('Y: for "tobit" observed data must be non-negative')
       }
     }
   } 
-  if (any(Family == "binomial")) {
+  if (any(FamilyInd == "binomial")) {
     count <- 1
     for (o in 1:O) {
-      if (Family[o] == "binomial") {
+      if (FamilyInd[o] == "binomial") {
         if (any(Y[ , o, ] < 0)) stop('Y: for "binomial" observed data must be non-negative')
         if (!isTRUE(all(Y[, o, ] == floor(Y[ , o, ])))) stop('Y: for "binomial" observed data must be non-negative integers')
         if (any(Y[, o, ] > Trials[, count, ])) stop('Y: for "binomial" observed data must be less than the corresponding number of Trials')
