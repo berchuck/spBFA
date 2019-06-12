@@ -62,7 +62,7 @@ metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj, datobj DatObj) {
   MetrObj.AcceptancePsi = AcceptancePsi;
   
   //Update Rho
-  if (SpCorInd == 0) {
+  if (SpCorInd == 0 & DatObj.IS == 1) {
     double MetropRho = MetrObj.MetropRho;
     double AcceptanceRho = MetrObj.AcceptanceRho;
     double PctRho = AcceptanceRho / double(PilotAdaptDenominator);
@@ -118,6 +118,7 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   int Nu = DatObj.Nu;
   int O = DatObj.O;
   int C = DatObj.C;
+  int P = DatObj.P;
 
   //Set parameter objects
   arma::mat Lambda = Para.Lambda;
@@ -129,11 +130,12 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
   double Psi = Para.Psi;
   arma::umat Xi = Para.Xi;
   double Rho = Para.Rho;
+  arma::colvec Beta = Para.Beta;
   
   //Save raw samples
   int counter = 0;
   arma::uword Index;
-  arma::colvec col(O * M * K + K * Nu + M * (O - C) + ((O + 1) * O) / 2 + K + ((K + 1) * K) / 2 + 1 + O * M * K + 1);
+  arma::colvec col(O * M * K + K * Nu + M * (O - C) + ((O + 1) * O) / 2 + K + ((K + 1) * K) / 2 + 1 + O * M * K + 1 + P);
   for (arma::uword o = 0; o < O; o++) {
     for (arma::uword i = 0; i < M; i++) {
       Index = i + M * o;
@@ -183,6 +185,11 @@ arma::colvec StoreSamples(datobj DatObj, para Para) {
     }
   }
   col(counter) = Rho;
+  counter++;
+  for (arma::uword p = 0; p < P; p++) {
+    col(counter) = Beta(p);
+    counter++;
+  }
   return col;
 }
 

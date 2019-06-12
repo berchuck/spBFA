@@ -45,6 +45,44 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// GetLogLik
+arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
+RcppExport SEXP _spBFA_GetLogLik(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
+    Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetLogLik(DatObj_List, Para_List, NKeep));
+    return rcpp_result_gen;
+END_RCPP
+}
+// GetLogLikMean
+double GetLogLikMean(Rcpp::List DatObj_List, Rcpp::List Para_List);
+RcppExport SEXP _spBFA_GetLogLikMean(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetLogLikMean(DatObj_List, Para_List));
+    return rcpp_result_gen;
+END_RCPP
+}
+// SamplePPD
+arma::mat SamplePPD(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
+RcppExport SEXP _spBFA_SamplePPD(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
+    Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
+    rcpp_result_gen = Rcpp::wrap(SamplePPD(DatObj_List, Para_List, NKeep));
+    return rcpp_result_gen;
+END_RCPP
+}
 // bfa_sp_Rcpp
 Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List, Rcpp::List HyPara_List, Rcpp::List MetrObj_List, Rcpp::List Para_List, Rcpp::List DatAug_List, Rcpp::List McmcObj_List, arma::mat RawSamples, bool Interactive);
 RcppExport SEXP _spBFA_bfa_sp_Rcpp(SEXP DatObj_ListSEXP, SEXP HyPara_ListSEXP, SEXP MetrObj_ListSEXP, SEXP Para_ListSEXP, SEXP DatAug_ListSEXP, SEXP McmcObj_ListSEXP, SEXP RawSamplesSEXP, SEXP InteractiveSEXP) {
@@ -91,15 +129,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // Play
-arma::mat Play(int f, arma::cube Cube);
-RcppExport SEXP _spBFA_Play(SEXP fSEXP, SEXP CubeSEXP) {
+void Play();
+RcppExport SEXP _spBFA_Play() {
 BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type f(fSEXP);
-    Rcpp::traits::input_parameter< arma::cube >::type Cube(CubeSEXP);
-    rcpp_result_gen = Rcpp::wrap(Play(f, Cube));
-    return rcpp_result_gen;
+    Play();
+    return R_NilValue;
 END_RCPP
 }
 // GetLStarJ
@@ -195,27 +230,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// helloPG
-SEXP helloPG(int n, double z);
-RcppExport SEXP _spBFA_helloPG(SEXP nSEXP, SEXP zSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type z(zSEXP);
-    rcpp_result_gen = Rcpp::wrap(helloPG(n, z));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_GetRooti", (DL_FUNC) &_spBFA_GetRooti, 2},
     {"_spBFA_H", (DL_FUNC) &_spBFA_H, 4},
     {"_spBFA_SpEXP", (DL_FUNC) &_spBFA_SpEXP, 3},
+    {"_spBFA_GetLogLik", (DL_FUNC) &_spBFA_GetLogLik, 3},
+    {"_spBFA_GetLogLikMean", (DL_FUNC) &_spBFA_GetLogLikMean, 2},
+    {"_spBFA_SamplePPD", (DL_FUNC) &_spBFA_SamplePPD, 3},
     {"_spBFA_bfa_sp_Rcpp", (DL_FUNC) &_spBFA_bfa_sp_Rcpp, 8},
     {"_spBFA_EtaKrigging", (DL_FUNC) &_spBFA_EtaKrigging, 3},
     {"_spBFA_YKrigging", (DL_FUNC) &_spBFA_YKrigging, 4},
-    {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 2},
+    {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 0},
     {"_spBFA_GetLStarJ", (DL_FUNC) &_spBFA_GetLStarJ, 5},
     {"_spBFA_GetLambda", (DL_FUNC) &_spBFA_GetLambda, 5},
     {"_spBFA_GetWeights", (DL_FUNC) &_spBFA_GetWeights, 5},
@@ -223,7 +249,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_CholInv", (DL_FUNC) &_spBFA_CholInv, 1},
     {"_spBFA_Inv3", (DL_FUNC) &_spBFA_Inv3, 1},
     {"_spBFA_makeSymm", (DL_FUNC) &_spBFA_makeSymm, 1},
-    {"_spBFA_helloPG", (DL_FUNC) &_spBFA_helloPG, 2},
     {NULL, NULL, 0}
 };
 

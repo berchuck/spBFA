@@ -14,5 +14,6 @@
 #' @importFrom stats dnorm lm sd var pnorm
 #' @importFrom msm rtnorm
 #' @importFrom mvtnorm pmvnorm
+#' @importFrom pgdraw pgdraw
 #' @useDynLib spBFA
 NULL

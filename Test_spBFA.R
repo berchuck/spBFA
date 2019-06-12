@@ -32,6 +32,7 @@ Y <- array(dim = c(M, O, Nu))
 Y[ , 1, ] <- VF
 Y[ , 2, ] <- RNFL
 Y <- Y / 10 # scale
+dat <- data.frame(Y = as.numeric(Y))
 Time <- patdata$sapfollowup
 blind_spot <- c(26, 35)
 W <- HFAII_Queen[-blind_spot, -blind_spot]
@@ -51,12 +52,12 @@ Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
                Upsilon = list(Zeta = K + 1, Omega = diag(K)))
 Tuning <- list(Psi = 1)
 MCMC <- list(NBurn = 5000, NSims = 5000, NThin = 1, NPilot = 10)
-reg.bfa_sp <- bfa_sp(Y = Y, Dist = W, Time = Time, K = K, Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, Family = c("tobit", "normal"))
+reg.bfa_sp <- bfa_sp(Y ~ 0, data = dat, family = c("tobit", "normal"), dist = W, time = Time, K = K, starting = Starting, hypers = Hypers, tuning = Tuning, mcmc = MCMC)
 
 save(reg.bfa_sp, file = "/Users/sam/Desktop/reg.RData")
 load(file = "/Users/sam/Desktop/reg.RData")
 
-pred <- predict(reg.bfa_sp, NewTimes = c(5.25))
+pred <- predict(reg.bfa_sp, NewTimes = c(5))
 
 ###Check posterior covariances
 Mean <- matrix(0, nrow = M * O, ncol = Nu)
@@ -72,7 +73,7 @@ Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)[1:52 , time]
 PlotSensitivity(Yt * 10, zlim = c(0, 40), bins = 250)
 PlotSensitivity(Mean[1:52, time] * 10, zlim = c(0, 40), bins = 250)
 
-PlotSensitivity(apply(pred$Y$Y9, 2, mean)[1:52] * 10, zlim = c(0, 40), bins = 250)
+PlotSensitivity(apply(pred$Y$Y8, 2, mean)[1:52] * 10, zlim = c(0, 40), bins = 250)
 
 time <- 7
 Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)[53:104 , time]
@@ -261,12 +262,13 @@ save(reg.bfa_sp, file = "/Users/sam/Desktop/out.RData")
 # traceplot(as.mcmc(reg.bfa_sp$kappa2))
 # par(mfcol = c(2, 2))
 # traceplot(as.mcmc(1 / reg.bfa_sp$tau))
-# 
-# 
+# install.packages("Rcpp_0.12.6.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
+# install.packages("pgdraw_1.1.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
 # install.packages("RcppArmadillo", lib = "/home/sib2/R")
 # install.packages("Cairo", lib = "/home/sib2/R")
 # 
 # install.packages("spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
 # .libPaths( c( .libPaths(), "/home/sib2/R") )
+# .libPaths( c("/home/sib2/R") )
 # install.packages("/home/sib2/Packages/spBFA_1.0.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)
 # install.packages("womblR_1.0.3.tar.gz", lib = "/home/sib2/R", type = "source", repo = NULL)

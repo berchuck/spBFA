@@ -1,6 +1,7 @@
 #define ARMA_DONT_PRINT_ERRORS //So the cholesky warning is suppressed
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
+#include <cmath>
 
 //Sample from a categorical distribution---------------------------------------------------
 // Rcpp::NumericVector sampleRcpp(Rcpp::NumericVector const& x, int size, bool replace, Rcpp::NumericVector const& prob = Rcpp::NumericVector::create()) {
@@ -31,6 +32,13 @@ double dlnorm(double x, double mu, double sigma2) {
 
 
 
+//Log density of a normal distribution - vectorized
+arma::colvec dlnormRcpp(arma::vec const& x, arma::vec const& mu, arma::vec const& sigma2) {
+  return -0.5 * log(2 * M_PI * sigma2) - 0.5 * ((x - mu) % (x - mu)) % (1 / sigma2);
+}
+
+
+
 //Function for sampling random standard uniform variable-----------------------------------
 double randuRcpp() {
   return R::runif(0, 1);
@@ -41,6 +49,16 @@ double randuRcpp() {
 //Function for sampling random standard uniform variable-----------------------------------
 double rbinomRcpp(double n, double p) {
   return R::rbinom(n, p);
+}
+
+
+
+//Log density of binomial-----------------------------------
+double dlbinom(int x, int n, double pi) { 
+  double temp = std::lgamma(n + 1.0);
+  temp -=  std::lgamma(x + 1.0) + std::lgamma((n - x) + 1.0);
+  temp += x * std::log(pi) + (n - x) * std::log(1- pi);
+  return temp;
 }
 
 
@@ -283,13 +301,33 @@ double pmvnormRcpp(int NBelowVisit, arma::vec const& CondMean, arma::mat const& 
 
 
 //Sample from a Polya-Gamma(z, n)-----------------------------------------------------
-arma::colvec rpg(arma::colvec shape, arma::colvec scale);
-double rPG(int n, double z) {
-  arma::colvec pgscale(n, arma::fill::ones);
-  arma::colvec pgshape(n);
-  for(arma::uword i = 0; i < n; i++) {
-    pgshape(i) = z;
-  }
-  return arma::as_scalar(arma::sum(rpg(pgscale, pgshape)));
-}
+// arma::colvec rpg(arma::colvec shape, arma::colvec scale);
+// double rPG(int n, double z) {
+//   arma::colvec pgscale(n, arma::fill::ones);
+//   arma::colvec pgshape(n);
+//   for(arma::uword i = 0; i < n; i++) {
+//     pgshape(i) = z;
+//   }
+//   return arma::as_scalar(arma::sum(rpg(pgscale, pgshape)));
+// }
 
+
+
+//Vectorized Polya-Gamma using pgdraw package------------------------------------------------------------------
+arma::vec pgRcpp(arma::vec const& b, arma::vec const& c) {
+  
+  //Set multivariate normal CDF function
+  // Rcpp::Environment mvtnorm("package:mvtnorm"); //This is equivalent to library(pgdraw)
+  Rcpp::Environment pgdraw_env = Rcpp::Environment::namespace_env("pgdraw"); //This is equivalent to PACKAGE::FUNCTION()
+  Rcpp::Function pgdraw = pgdraw_env["pgdraw"];
+  
+  //Evaluate pmvnorm
+  Rcpp::NumericVector B = Rcpp::NumericVector(b.begin(), b.end());
+  Rcpp::NumericVector C = Rcpp::NumericVector(c.begin(), c.end());
+  SEXP pgdrawSEXP = pgdraw(Rcpp::Named("b", B),
+                           Rcpp::Named("c", C));
+  
+  //Convert output to Armadillo vector
+  return Rcpp::as<arma::vec>(pgdrawSEXP);
+  
+}

@@ -20,6 +20,9 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   int C = DatObj_List["C"];
   int TempCorInd = DatObj_List["TempCorInd"];
   int SpCorInd = DatObj_List["SpCorInd"];
+  int GS = DatObj_List["GS"];
+  int IS = DatObj_List["IS"];
+  int CL = DatObj_List["CL"];
   arma::Col<int> FamilyInd = DatObj_List["FamilyInd"];
   int LInf = DatObj_List["LInf"];
   arma::mat EyeNu = DatObj_List["EyeNu"];
@@ -35,6 +38,9 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   arma::colvec OneO = DatObj_List["OneO"];
   arma::cube Trials = DatObj_List["Trials"];
   arma::cube Chi = DatObj_List["Chi"];
+  arma::mat X = DatObj_List["X"];
+  int P = DatObj_List["P"];
+  arma::Col<int> Indeces = DatObj_List["Indeces"];
 
   //Convert to C++ struct
   datobj DatObj;
@@ -51,6 +57,9 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.Nu = Nu;
   DatObj.O = O;
   DatObj.C = C;
+  DatObj.GS = GS;
+  DatObj.IS = IS;
+  DatObj.CL = CL;
   DatObj.TempCorInd = TempCorInd;
   DatObj.SpCorInd  = SpCorInd;
   DatObj.FamilyInd = FamilyInd;
@@ -68,6 +77,9 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.OneO = OneO;
   DatObj.Trials = Trials;
   DatObj.Chi = Chi;
+  DatObj.P = P;
+  DatObj.X = X;
+  DatObj.Indeces = Indeces;
   return DatObj;
 
 }
@@ -92,6 +104,8 @@ hypara ConvertHyPara(Rcpp::List HyPara_List) {
   double Zeta = HyPara_List["Zeta"];
   arma::mat Omega = HyPara_List["Omega"];
   arma::mat BigTheta = HyPara_List["BigTheta"];
+  arma::colvec SigmaBetaInvMuBeta = HyPara_List["SigmaBetaInvMuBeta"];
+  arma::mat SigmaBetaInv = HyPara_List["SigmaBetaInv"];
   
   //Convert to C++ struct
   hypara HyPara;
@@ -109,6 +123,8 @@ hypara ConvertHyPara(Rcpp::List HyPara_List) {
   HyPara.Zeta = Zeta;
   HyPara.Omega = Omega;
   HyPara.BigTheta = BigTheta;
+  HyPara.SigmaBetaInvMuBeta = SigmaBetaInvMuBeta;
+  HyPara.SigmaBetaInv = SigmaBetaInv;
   return HyPara;
 
 }
@@ -146,6 +162,7 @@ para ConvertPara(Rcpp::List Para_List) {
   arma::mat Kappa = Para_List["Kappa"];
   double Rho = Para_List["Rho"];
   arma::colvec Delta = Para_List["Delta"];
+  arma::colvec Beta = Para_List["Beta"];
   double Psi = Para_List["Psi"];
   arma::mat Upsilon = Para_List["Upsilon"];
   arma::mat UpsilonInv = Para_List["UpsilonInv"];
@@ -171,6 +188,7 @@ para ConvertPara(Rcpp::List Para_List) {
   arma::mat CholKappa = Para_List["CholKappa"];
   arma::mat KappaInv = Para_List["KappaInv"];
   arma::cube Cov = Para_List["Cov"];
+  arma::colvec XBeta = Para_List["XBeta"];
 
   //Convert to C++ struct
   para Para;
@@ -178,6 +196,7 @@ para ConvertPara(Rcpp::List Para_List) {
   Para.Kappa = Kappa;
   Para.Rho = Rho;
   Para.Delta = Delta;
+  Para.Beta = Beta;
   Para.Psi = Psi;
   Para.Upsilon = Upsilon;
   Para.UpsilonInv = UpsilonInv;
@@ -203,6 +222,7 @@ para ConvertPara(Rcpp::List Para_List) {
   Para.CholKappa = CholKappa;
   Para.KappaInv = KappaInv;
   Para.Cov = Cov;
+  Para.XBeta = XBeta;
   return Para;
 }
 

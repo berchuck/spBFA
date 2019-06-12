@@ -4,14 +4,25 @@
 \alias{predict.spBFA}
 \title{predict.spBFA}
 \usage{
-\method{predict}{spBFA}(object, NewTimes, NewTrials = NULL,
-  type = "temporal", ...)
+\method{predict}{spBFA}(object, NewTimes, NewX = NULL,
+  NewTrials = NULL, type = "temporal", ...)
 }
 \arguments{
-\item{object}{a \code{\link{spBFA}} model object for which predictions
+\item{object}{A \code{\link{spBFA}} model object for which predictions
 are desired from.}
 
-\item{NewTimes}{a numeric vector including desired time(s) points for prediction.}
+\item{NewTimes}{A numeric vector including desired time(s) points for prediction.}
+
+\item{NewX}{A matrix including covariates at times \code{NewTimes} for prediction. 
+\code{NewX} must have dimension \code{(M x O x NNewVistis) x P}. Where \code{NNewVisits} is the number of temporal 
+locations being predicted. The default sets \code{NewX} to \code{NULL}, which assumes that the covariates for all predictions 
+are the same as the final time point.}
+
+\item{NewTrials}{An array indicating the trials for categorical predictions. The array must have dimension \code{M x C x NNewVisits}
+and contain only non-negative integers. The default sets \code{NewTrials} to \code{NULL}, which assumes the trials for all predictions
+are the same as the final time point.}
+
+\item{type}{A character string indicating the type of prediction, choices include "temporal" and "spatial".}
 
 \item{...}{other arguments.}
 }

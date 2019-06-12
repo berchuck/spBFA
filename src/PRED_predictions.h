@@ -12,6 +12,7 @@ struct datobjPRED {
   int Nu;
   int O;
   int C;
+  int P;
   arma::Col<int> FamilyInd;
   int TempCorInd;
   int NNewVisits;
@@ -20,6 +21,7 @@ struct datobjPRED {
   arma::uvec NewVisits;
   arma::uvec OriginalVisits;
   arma::cube Trials;
+  arma::mat NewX;
 };
 struct paraPRED {
   arma::mat Psi;
@@ -27,6 +29,7 @@ struct paraPRED {
   arma::mat Lambda;
   arma::mat Sigma2;
   arma::mat Eta;
+  arma::mat Beta;
 };
 
 //COVARIANCE FUNCTIONS

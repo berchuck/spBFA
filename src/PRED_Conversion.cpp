@@ -10,6 +10,7 @@ datobjPRED ConvertDatObjPRED(Rcpp::List DatObj_List) {
   int Nu = DatObj_List["Nu"];
   int O = DatObj_List["O"];
   int C = DatObj_List["C"];
+  int P = DatObj_List["P"];
   arma::Col<int> FamilyInd = DatObj_List["FamilyInd"];
   int NNewVisits = DatObj_List["NNewVisits"];
   int TempCorInd = DatObj_List["TempCorInd"];
@@ -18,12 +19,14 @@ datobjPRED ConvertDatObjPRED(Rcpp::List DatObj_List) {
   arma::uvec NewVisits = DatObj_List["NewVisits"];
   arma::uvec OriginalVisits = DatObj_List["OriginalVisits"];
   arma::cube Trials = DatObj_List["Trials"];
+  arma::mat NewX = DatObj_List["NewX"];
 
   //Convert to C++ struct
   datobjPRED DatObj;
   DatObj.M = M;
   DatObj.K = K;
   DatObj.Nu = Nu;
+  DatObj.P = P;
   DatObj.FamilyInd = FamilyInd;
   DatObj.O = O;
   DatObj.C = C;
@@ -34,6 +37,7 @@ datobjPRED ConvertDatObjPRED(Rcpp::List DatObj_List) {
   DatObj.NewVisits = NewVisits;
   DatObj.OriginalVisits = OriginalVisits;
   DatObj.Trials = Trials;
+  DatObj.NewX = NewX;
   return DatObj;
 
 }
@@ -49,6 +53,7 @@ paraPRED ConvertParaPRED(Rcpp::List Para_List) {
   arma::mat Lambda = Para_List["Lambda"];
   arma::mat Sigma2 = Para_List["Sigma2"];
   arma::mat Eta = Para_List["Eta"];
+  arma::mat Beta = Para_List["Beta"];
 
   //Convert to C++ struct
   paraPRED Para;
@@ -57,5 +62,6 @@ paraPRED ConvertParaPRED(Rcpp::List Para_List) {
   Para.Lambda = Lambda;
   Para.Sigma2 = Sigma2;
   Para.Eta = Eta;
+  Para.Beta = Beta;
   return Para;
 }

@@ -4,22 +4,26 @@
 \alias{bfa_sp}
 \title{Spatial factor analysis using a Bayesian hierarchical model.}
 \usage{
-bfa_sp(Y, Dist, Time, K, L = Inf, Trials = NULL, Starting = NULL,
-  Hypers = NULL, Tuning = NULL, MCMC = NULL, Family = "normal",
-  TemporalStructure = "exponential", SpatialStructure = "discrete",
-  Seed = 54)
+bfa_sp(formula, data, dist, time, K, L = Inf, trials = NULL,
+  family = "normal", temporal.structure = "exponential",
+  spatial.structure = "discrete", starting = NULL, hypers = NULL,
+  tuning = NULL, mcmc = NULL, seed = 54, gamma.shrinkage = TRUE,
+  include.space = TRUE, clustering = TRUE)
 }
 \arguments{
-\item{Y}{A \code{M x O x Nu} dimensional array containing the observed outcome data.
-Here, \code{M} represents the number of spatial locations, \code{O} the number of different observation types
-and \code{Nu} the number of temporal visits. The observations in \code{Y} must be first
-ordered spatially, second by observation type and then temporally. This means that each slice, Y[ , , t] is an \code{M x O} matrix
-with each column having observations from each spatial location \code{M} of a spatial observation type.}
+\item{formula}{A \code{formula} object, corresponding to the spatial factor analysis model. The response must be on the left of a \code{~} operator, and the terms on the right 
+must indicate the covariates to be included in the fixed effects. If no covariates are desired a zero should be used, \code{~ 0}.}
 
-\item{Dist}{A \code{M x M} dimensional distance matrix. For a \code{discrete} spatial process the matrix contains binary adjacencies that dictate the
+\item{data}{A required \code{data.frame} containing the variables in the model. The data frame must contain \code{M x O x Nu} rows.
+Here, \code{M} represents the number of spatial locations, \code{O} the number of different observation types
+and \code{Nu} the number of temporal visits. The observations must be first be
+ordered spatially, second by observation type and then temporally. This means that the first \code{M x O} observations come from the first time point and
+the first \code{M} observations come the first spatial observation type.}
+
+\item{dist}{A \code{M x M} dimensional distance matrix. For a \code{discrete} spatial process the matrix contains binary adjacencies that dictate the
 spatial neigborhood structure and for \code{continuous} spatial processes the matrix should be a continuous distance matrix (e.g., Euclidean).}
 
-\item{Time}{A \code{Nu} dimensional vector containing the observed time points
+\item{time}{A \code{Nu} dimensional vector containing the observed time points
 in increasing order.}
 
 \item{K}{A scalar that indicates the dimension (i.e., quantity) of latent factors.}
@@ -27,29 +31,41 @@ in increasing order.}
 \item{L}{The number of latent clusters. If finite, a scalar indicating the number of clusters for each column of the factor loadings matrix. By default \code{L} is set at \code{Inf}
 so that the Probit stick-breaking process becomes an infinite mixture model.}
 
-\item{Trials}{A \code{M x C x Nu} dimensional array containing the number of trials for each of the observations in Y. The second dimension 
-now is \code{C} dimensional, which corresponds to the number of \code{binomial} random variable types. If there is no count data, \code{Trials} should be left missing.}
+\item{trials}{A variable in \code{data} that contains the number of trials for each of the binomial observations. If there is no count data, \code{trials} should be left missing.}
 
-\item{Starting}{Either \code{NULL} or a \code{list} containing starting values
+\item{family}{Character string indicating the distribution of the observed data. Options
+include: \code{"normal"}, \code{"probit"}, \code{"tobit"}, and \code{"binomial"}. \code{family} must have either \code{O} or
+\code{1} dimension(s) (the one populates the rest). Any combination of likelihoods can be used.}
+
+\item{temporal.structure}{Character string indicating the temporal kernel. Options include:
+\code{"exponential"} and \code{"ar1"}.}
+
+\item{spatial.structure}{Character string indicating the type of spatial process. Options include:
+\code{"continuous"} (i.e., Gaussian process with exponential kernel) and \code{"discrete"} (i.e., proper CAR).}
+
+\item{starting}{Either \code{NULL} or a \code{list} containing starting values
  to be specified for the MCMC sampler. If \code{NULL} is not chosen then none, some or all
  of the starting values may be specified.
 
  When \code{NULL} is chosen then default starting values are automatically generated.
- Otherwise a \code{list} must be provided with names \code{Delta}, \code{Sigma2}, \code{Kappa}, \code{Rho}, \code{Upsilon} or
- \code{Psi} containing appropriate objects. \code{Delta} must either be a \code{K} dimensional
+ Otherwise a \code{list} must be provided with names \code{Beta}, \code{Delta}, \code{Sigma2}, \code{Kappa}, \code{Rho}, \code{Upsilon} or
+ \code{Psi} containing appropriate objects. \code{Beta} (or \code{Delta}) must either be a \code{P} (or \code{K}) dimensional
  vector or a scalar (the scalar populates the entire vector). \code{Sigma2} must be either a \code{M x (O - C)} matrix or a scalar.
  \code{Kappa} must be a \code{O x O} dimensional matrix, \code{Rho} a scalar, \code{Upsilon} a \code{K x K} matrix, and \code{Psi} a scalar.}
 
-\item{Hypers}{Either \code{NULL} or a \code{list} containing hyperparameter values
+\item{hypers}{Either \code{NULL} or a \code{list} containing hyperparameter values
  to be specified for the MCMC sampler. If \code{NULL} is not chosen then none, some or all
  of the hyperparameter values may be specified.
 
  When \code{NULL} is chosen then default hyperparameter values are automatically
  generated. These default hyperparameters are described in detail in (Berchuck et al.).
- Otherwise a \code{list} must be provided with names \code{Delta}, \code{Sigma2}, \code{Kappa}, \code{Rho}, \code{Upsilon} or
+ Otherwise a \code{list} must be provided with names \code{Beta}, \code{Delta}, \code{Sigma2}, \code{Kappa}, \code{Rho}, \code{Upsilon} or
  \code{Psi} containing further hyperparameter information. These objects are themselves
  \code{lists} and may be constructed as follows.
 
+ \code{Beta} is a \code{list} with two objects, \code{MuBeta} and \code{SigmaBeta}. These values represent the prior mean and variance 
+ parameters for the multivariate normal prior.
+ 
  \code{Delta} is a \code{list} with two objects, \code{A1} and \code{A2}. These values represent the prior shape 
  parameters for the multiplicative Gamma shrinkage prior.
  
@@ -75,7 +91,7 @@ now is \code{C} dimensional, which corresponds to the number of \code{binomial} 
  the upper bound. The bounds must be specified carefully. For \code{ar1}, the two objets are \code{Beta} and \code{Gamma}, which are the 
  two shape parameters of a Beta distribution shifted to have domain in (-1, 1).}
 
-\item{Tuning}{Either \code{NULL} or a \code{list} containing tuning values
+\item{tuning}{Either \code{NULL} or a \code{list} containing tuning values
  to be specified for the MCMC Metropolis steps. If \code{NULL} is not chosen then all
  of the tuning values must be specified.
 
@@ -84,7 +100,7 @@ now is \code{C} dimensional, which corresponds to the number of \code{binomial} 
  or \code{Rho}. Each of these entries must be scalars containing tuning variances for their corresponding Metropolis updates.
  \code{Rho} is only specified for continuous spatial processes.}
 
-\item{MCMC}{Either \code{NULL} or a \code{list} containing input values to be used
+\item{mcmc}{Either \code{NULL} or a \code{list} containing input values to be used
  for implementing the MCMC sampler. If \code{NULL} is not chosen then all
  of the MCMC input values must be specified.
 
@@ -101,18 +117,17 @@ now is \code{C} dimensional, which corresponds to the number of \code{binomial} 
  \code{NPilot}: The number of times during the burn-in phase that pilot adaptation
  is performed (default = \code{20})}
 
-\item{Family}{Character string indicating the distribution of the observed data. Options
-include: \code{"normal"}, \code{"probit"}, \code{"tobit"}, and \code{"binomial"}. \code{Family} must have either \code{O} or
-\code{1} dimensions (the one populates the rest). Any combination of likelihoods can be used.}
-
-\item{TemporalStructure}{Character string indicating the temporal kernel. Options include:
-\code{"exponential"} and \code{"ar1"}.}
-
-\item{SpatialStructure}{Character string indicating the type of spatial process. Options include:
-\code{"continuous"} (i.e., Gaussian process with exponential kernel) and \code{"discrete"} (i.e., proper CAR).}
-
-\item{Seed}{An integer value used to set the seed for the random number generator
+\item{seed}{An integer value used to set the seed for the random number generator
 (default = 54).}
+
+\item{gamma.shrinkage}{A logical indicating whether a gamma shrinkage process prior is used for the variances of the factor loadings columns. If FALSE,
+the hyperparameters (A1 and A2) indicate the shape and rate for a gamma prior on the precisions. Default is TRUE.}
+
+\item{include.space}{A logical indicating whether a spatial process should be included. Default is TRUE, however if FALSE the spatial correlation matrix 
+is fixed as an identity matrix. This specification overrides the \code{spatial.structure} input.}
+
+\item{clustering}{A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
+each row of the factor loadings matrix is forced to belong to its own cluster.}
 }
 \value{
 \code{bfa_sp} returns a list containing the following objects
@@ -124,6 +139,8 @@ include: \code{"normal"}, \code{"probit"}, \code{"tobit"}, and \code{"binomial"}
 
   \item{\code{eta}}{\code{NKeep x (Nu x K)} \code{matrix} of posterior samples for the latent factors \code{eta}.
   The labels for each column are Eta_Nu_K.}
+
+  \item{\code{beta}}{\code{NKeep x P} \code{matrix} of posterior samples for \code{beta}.}
 
   \item{\code{sigma2}}{\code{NKeep x (M * (O - C))} \code{matrix} of posterior samples for the variances \code{sigma2}.
   The labels for each column are Sigma2_O_M.}

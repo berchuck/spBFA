@@ -17,12 +17,15 @@ arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat Eta
   int M = DatObj.M;
   int O = DatObj.O;
   int K = DatObj.K;
+  int P = DatObj.P;
   int NNewVisits = DatObj.NNewVisits;
   arma::cube Trials = DatObj.Trials;
+  arma::mat NewX = DatObj.NewX;
 
   //Set parameters
   arma::mat LambdaMat = Para.Lambda;
   arma::mat Sigma2Mat = Para.Sigma2;
+  arma::mat BetaMat = Para.Beta;
   
   //Verbose output
   arma::vec VerboseSeq;
@@ -34,7 +37,7 @@ arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat Eta
   arma::cube Out(M * O, NNewVisits, NKeep);
   arma::mat YMax(M, O, arma::fill::zeros), Lambda(M * O, K), OutTemp(M * O, NNewVisits);
   arma::mat BigPhi(K, NNewVisits), Mean(M * O, NNewVisits), MeanMat(M, O), PredMat(M, O);
-  arma::colvec MeanVec(M), Pi(M), TrialsVec(M);
+  arma::colvec MeanVec(M), Pi(M), TrialsVec(M), Beta(P);
   arma::umat ProbitOnes;
   int FamilyType, count;
   
@@ -44,9 +47,10 @@ arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat Eta
     //Extract level 1 parameters
     BigPhi = arma::reshape(EtaKrig.col(s), K, NNewVisits);
     Lambda = arma::reshape(LambdaMat.row(s), K, M * O).t();
+    Beta = BetaMat.row(s).t();
     
     //Get joint moments
-    Mean = Lambda * BigPhi;
+    Mean = Lambda * BigPhi + arma::reshape(NewX * Beta, M * O, NNewVisits);
     
     //Loop over predictions
     for (arma::uword n = 0; n < NNewVisits; n++) {
@@ -68,10 +72,6 @@ arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat Eta
           arma::vec SD = arma::sqrt(Sigma2.row(count).t());
           MeanVec = MeanMat.col(f);
           PredMat.col(f) = rnormVecRcpp(MeanVec, SD);
-          
-          // Rcpp::Rcout << std::fixed << Sigma2 << std::endl;
-          
-          
           count++;
           if (FamilyType == 1) { //Probit
             PredMat = arma::max(PredMat, YMax);

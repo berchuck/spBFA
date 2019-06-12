@@ -10,7 +10,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
                        Rcpp::List MetrObj_List, Rcpp::List Para_List,
                        Rcpp::List DatAug_List,  Rcpp::List McmcObj_List,
                        arma::mat RawSamples, bool Interactive);
-  
+
 //STRUCT DEFINITIONS
 struct datobj {
   int N;
@@ -20,7 +20,12 @@ struct datobj {
   int L;
   int O;
   int C;
+  int P;
+  int GS;
+  int IS;
+  int CL;
   arma::Col<int> FamilyInd;
+  arma::Col<int> Indeces;
   int TempCorInd;
   int SpCorInd;
   int LInf;
@@ -36,6 +41,7 @@ struct datobj {
   arma::mat EyeO;
   arma::mat EyeOM;
   arma::mat EyeKbyNu;
+  arma::mat X;
   arma::colvec ZeroKbyNu;
   arma::colvec ZeroM;
   arma::colvec ZeroOM;
@@ -59,6 +65,8 @@ struct hypara {
   double Zeta;
   arma::mat Omega;
   arma::mat BigTheta;
+  arma::colvec SigmaBetaInvMuBeta;
+  arma::mat SigmaBetaInv;
 };
 struct metrobj {
   double MetropPsi;
@@ -73,6 +81,7 @@ struct para {
   arma::mat Kappa;
   double Psi;
   double Rho;
+  arma::colvec Beta;
   arma::mat Upsilon;
   arma::mat UpsilonInv;
   arma::umat Xi;
@@ -97,6 +106,7 @@ struct para {
   arma::mat CholKappa;
   arma::mat KappaInv;
   arma::cube Cov;
+  arma::colvec XBeta;
 };
 struct dataug {
   int NBelow;
@@ -141,7 +151,7 @@ double lndMvn(arma::vec const& Y, arma::vec const& Mu, arma::mat const& Rooti);
 double randuRcpp();
 double rtnormRcpp(double mean, double sd, bool Above);
 arma::vec rtnormRcppMSM(int N, arma::vec const& mean, arma::vec const& sd, double lower, double upper);
-double rPG(int n, double z);
+arma::vec pgRcpp(arma::vec const& b, arma::vec const& c);
 
 //MCMC CONVERSION FUNCTIONS
 datobj ConvertDatObj(Rcpp::List DatObj_List);
@@ -165,6 +175,7 @@ para SampleSigma2(datobj DatObj, para Para, hypara HyPara);
 std::pair<datobj, para> SampleY(datobj DatObj, para Para, dataug DatAug);
 para SampleU(datobj DatObj, para Para);
 std::pair<para, metrobj> SampleRho(datobj DatObj, para Para, hypara HyPara, metrobj MetrObj);
+para SampleBeta(datobj DatObj, para Para, hypara HyPara);
   
 //MCMC UTILITY FUNCTIONS
 void BeginBurnInProgress(mcmcobj McmcObj, bool Interactive);

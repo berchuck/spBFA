@@ -7,6 +7,8 @@ FormatSamples <- function(DatObj, RawSamples) {
   Nu <- DatObj$Nu
   O <- DatObj$O
   C <- DatObj$C
+  P <- DatObj$P
+  GS <- DatObj$GS
   
   ###Format raw samples
   RawSamples <- t(RawSamples)
@@ -16,11 +18,13 @@ FormatSamples <- function(DatObj, RawSamples) {
   if (C != O) Sigma2 <- RawSamples[, (O * M * K + K * Nu + 1):(O * M * K + K * Nu + M * (O - C))]
   Kappa <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2), drop = FALSE]
   Delta <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K), drop = FALSE]
-  Tau <- matrix(t(apply(Delta, 1, cumprod)), ncol = K)
+  if (GS == 1) Tau <- matrix(t(apply(Delta, 1, cumprod)), ncol = K)
+  if (GS == 0) Tau <- Delta
   Upsilon <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2), drop = FALSE]
   Psi <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1), drop = FALSE]
   Xi <- RawSamples[, (O * M * K + K * Nu + M  * (O - C)+ (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K)]
   Rho <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K + 1), drop = FALSE]
+  if (P > 1) Beta <- RawSamples[, (O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K + 1 + 1):(O * M * K + K * Nu + M * (O - C) + (O * (O + 1)) / 2 + K + (K * (K + 1)) / 2 + 1 + O * M * K + 1 + P), drop = FALSE]
   LambdaInd <- expand.grid(1:K, 1:M, 1:O)
   colnames(Lambda) <- paste0("Lambda_", LambdaInd[, 3], "_", LambdaInd[, 2], "_", LambdaInd[, 1])
   EtaInd <- expand.grid(1:K, 1:Nu)
@@ -38,7 +42,9 @@ FormatSamples <- function(DatObj, RawSamples) {
   colnames(Psi) <- "Psi"
   colnames(Xi) <- paste0("Xi_", LambdaInd[, 3], "_", LambdaInd[, 2], "_", LambdaInd[, 1])
   colnames(Rho) <- "Rho"
-  Out <- list(Lambda = Lambda, Eta = Eta, Sigma2 = Sigma2, Kappa = Kappa, Delta = Delta, Tau = Tau, Upsilon = Upsilon, Psi = Psi, Xi = Xi, Rho = Rho)
+  if (P == 0) Beta <- NULL
+  if (P > 0) colnames(Beta) <- paste0("Beta", 1:P)
+  Out <- list(Lambda = Lambda, Eta = Eta, Sigma2 = Sigma2, Kappa = Kappa, Delta = Delta, Tau = Tau, Upsilon = Upsilon, Psi = Psi, Xi = Xi, Rho = Rho, Beta = Beta)
   return(Out)
 }
 
@@ -98,6 +104,7 @@ SummarizeMetropolis <- function(DatObj, MetrObj, MetropRcpp, McmcObj) {
 
   ###Set data object
   SpCorInd <- DatObj$SpCorInd
+  IS <- DatObj$IS
 
   ###Set MCMC object
   NSims <- McmcObj$NSims
@@ -112,7 +119,7 @@ SummarizeMetropolis <- function(DatObj, MetrObj, MetropRcpp, McmcObj) {
   colnames(MetrSummary) <- c("Acceptance", "PilotAdaptedTuners", "OriginalTuners")
   
   ###Add Rho
-  if (SpCorInd == 0) {
+  if (SpCorInd == 0 & IS == 1) {
     MetropRho <- MetropRcpp$MetropRho
     AcceptanceRho <- MetropRcpp$AcceptanceRho
     OriginalTuners <- MetrObj$OriginalTuners

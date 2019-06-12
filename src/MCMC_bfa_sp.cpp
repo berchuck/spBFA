@@ -9,7 +9,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
                        Rcpp::List MetrObj_List, Rcpp::List Para_List,
                        Rcpp::List DatAug_List,  Rcpp::List McmcObj_List,
                        arma::mat RawSamples, bool Interactive) {
-  
+
   //Convet Rcpp::Lists to C++ structs
   datobj DatObj = ConvertDatObj(DatObj_List);
   hypara HyPara = ConvertHyPara(HyPara_List);
@@ -53,9 +53,9 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     
     //Gibbs step for Theta
     Para = SampleTheta(DatObj, Para);
-    
+
     //Gibbs step for Xi
-    Para = SampleXi(DatObj, Para);
+    if (DatObj.CL == 1) Para = SampleXi(DatObj, Para);
     
     //Gibbs step for Z
     Para = SampleZ(DatObj, Para);
@@ -67,7 +67,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     Para = SampleKappa(DatObj, Para, HyPara);
     
     //Metropolis step for Rho
-    if (SpCorInd == 0) {
+    if (SpCorInd == 0 & DatObj.IS == 1) {
       Update = SampleRho(DatObj, Para, HyPara, MetrObj);
       Para = Update.first;
       MetrObj = Update.second;
@@ -75,7 +75,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   
     //Gibbs step for Delta
     Para = SampleDelta(DatObj, Para, HyPara);
-    
+
     //Gibbs step for Eta
     Para = SampleEta(DatObj, Para, HyPara);
     
@@ -90,6 +90,11 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     //Gibbs step for Sigma2
     if (any(FamilyInd != 3)) {
       Para = SampleSigma2(DatObj, Para, HyPara);
+    }
+    
+    //Gibbs step for Beta
+    if (DatObj.P > 0) {
+      Para = SampleBeta(DatObj, Para, HyPara);
     }
     
     //Pilot adaptation

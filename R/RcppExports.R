@@ -13,6 +13,18 @@ SpEXP <- function(Rho, SpDist, M) {
     .Call('_spBFA_SpEXP', PACKAGE = 'spBFA', Rho, SpDist, M)
 }
 
+GetLogLik <- function(DatObj_List, Para_List, NKeep) {
+    .Call('_spBFA_GetLogLik', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep)
+}
+
+GetLogLikMean <- function(DatObj_List, Para_List) {
+    .Call('_spBFA_GetLogLikMean', PACKAGE = 'spBFA', DatObj_List, Para_List)
+}
+
+SamplePPD <- function(DatObj_List, Para_List, NKeep) {
+    .Call('_spBFA_SamplePPD', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep)
+}
+
 bfa_sp_Rcpp <- function(DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive) {
     .Call('_spBFA_bfa_sp_Rcpp', PACKAGE = 'spBFA', DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive)
 }
@@ -25,8 +37,8 @@ YKrigging <- function(DatObj_List, Para_List, EtaKrig, NKeep) {
     .Call('_spBFA_YKrigging', PACKAGE = 'spBFA', DatObj_List, Para_List, EtaKrig, NKeep)
 }
 
-Play <- function(f, Cube) {
-    .Call('_spBFA_Play', PACKAGE = 'spBFA', f, Cube)
+Play <- function() {
+    invisible(.Call('_spBFA_Play', PACKAGE = 'spBFA'))
 }
 
 GetLStarJ <- function(U, Weights, K, M, O) {
@@ -55,9 +67,5 @@ Inv3 <- function(A) {
 
 makeSymm <- function(A) {
     .Call('_spBFA_makeSymm', PACKAGE = 'spBFA', A)
-}
-
-helloPG <- function(n, z) {
-    .Call('_spBFA_helloPG', PACKAGE = 'spBFA', n, z)
 }
 

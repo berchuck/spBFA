@@ -22,22 +22,41 @@ library(womblR)
 analdata <- read.csv("/Users/sam/Box Sync/Postdoc/Projects/SFA/Mark/Data/malaria_data_for_Sam.csv")
 W <- read.csv("/Users/sam/Box Sync/Postdoc/Projects/SFA/Mark/Data/adj_matrix.csv", header = FALSE)[, -1]
 W <- as.matrix(W)
-M <- 51
-O <- 2
-# Nu <- 52 * 1
-Nu <- 10
-Data <- Trials <- array(dim = c(M, O, Nu))
-Data1 <- matrix(analdata$nfalciparum[analdata$year %in% 2015 & analdata$epiweek %in% 1:10], nrow = M, ncol = Nu)
-Data2 <- matrix(analdata$nvivax[analdata$year %in% 2015 & analdata$epiweek %in% 1:10], nrow = M, ncol = Nu)
-Trial <- matrix(analdata$population[analdata$year %in% 2015 & analdata$epiweek %in% 1:10], nrow = M, ncol = Nu)
-Data[ , 1, ] <- Data1
-Data[ , 2, ] <- Data2
-Trials[ , 1, ] <- Trials[ , 2, ] <- Trial
-Time <- seq(0, 1, length.out = Nu)
+M <- length(unique(analdata$ubigeo))
+Types <- c("nfalciparum", "nvivax")
+O <- length(Types)
+analdata2015 <- analdata[(analdata$year == 2015) & (analdata$epiweek %in% 1:10), ]
+analdata2015$season <- 1 * (as.numeric(format(as.Date(analdata2015$date, format = "%m/%d/%Y"), "%m")) %in% c(2, 3, 4, 5, 6, 7))
+
+
+Nu <- dim(analdata2015)[1] / M
+N <- M * O * Nu
+Space <- unique(analdata2015$ubigeo)
+Time <- unique(analdata2015$epiweek)
+dat <- matrix(nrow = N, ncol = 8)
+for (t in 1:Nu) {
+  for (o in 1:O) {
+    for (i in 1:M) {
+      Index <- i + (o - 1) * M + M * O * (t - 1)
+      dat[Index, 1] <- analdata2015[analdata2015$ubigeo == Space[i] & analdata2015$epiweek == Time[t], Types[o]]
+      dat[Index, 2] <- analdata2015[analdata2015$ubigeo == Space[i] & analdata2015$epiweek == Time[t], "population"]
+      dat[Index, 3] <- analdata2015[analdata2015$ubigeo == Space[i] & analdata2015$epiweek == Time[t], "rainMM"]
+      dat[Index, 4] <- analdata2015[analdata2015$ubigeo == Space[i] & analdata2015$epiweek == Time[t], "TmeanC"]
+      dat[Index, 5] <- analdata2015[analdata2015$ubigeo == Space[i] & analdata2015$epiweek == Time[t], "season"]
+      dat[Index, 6] <- t
+      dat[Index, 7] <- o
+      dat[Index, 8] <- i
+    }
+  }
+}
+dat <- data.frame(dat)
+colnames(dat) <- c("malaria", "population", "rain", "temp", "season", "time", "type", "location")
+
+Time <- unique(dat$time / Nu) 
 TimeDist <- as.matrix(dist(Time))
 BPsi <- log(0.025) / -min(TimeDist[TimeDist > 0])
 APsi <- log(0.975) / -max(TimeDist)
-K <- 10
+K <- round(log(M * O))
 Starting <- list(Kappa = diag(O),
                  Delta = 2 * (1:K),
                  Psi = (APsi + BPsi) / 2,
@@ -48,30 +67,39 @@ Hypers <- list(Kappa = list(SmallUpsilon = O + 1, BigTheta = diag(O)),
                Upsilon = list(Zeta = K + 1, Omega = diag(K)))
 Tuning <- list(Psi = 1)
 MCMC <- list(NBurn = 100, NSims = 100, NThin = 1, NPilot = 2)
-reg.bfa_sp <- bfa_sp(Y = Data, Trials = Trials, Dist = W, Time = Time, K = K, Starting = Starting, Hypers = Hypers, Tuning = Tuning, MCMC = MCMC, Family = "binomial")
+reg.bfa_spTEST <- bfa_sp(malaria ~ rain + temp + season, data = dat, family = "binomial", trials = "population", dist = W, time = Time, K = K, starting = Starting, hypers = Hypers, tuning = Tuning, mcmc = MCMC)
 
-pred <- predict(reg.bfa_sp, NewTimes = 0.999, type = "temporal")
+reg.bfa_sp <- bfa_sp(malaria ~ rain + temp + season, data = dat, family = "binomial", trials = "population", dist = W, time = Time, K = K, starting = Starting, hypers = Hypers, tuning = Tuning, mcmc = MCMC)
+
+pred <- predict(reg.bfa_sp, NewTimes = 0.1923, type = "temporal", X = X[reg.bfa_sp$datobj$Indeces == (Nu - 1), ], NewTrials = array(reg.bfa_sp$datobj$Trials, dim = c(M, O, 1)))
 
 ###Check posterior covariances
+X <- model.matrix(malaria ~ rain + temp + season, data = dat)
 Mean <- matrix(0, nrow = M * O, ncol = Nu)
 for (s in 1:dim(reg.bfa_sp$rho)[1]) {
   Lambda <- matrix(reg.bfa_sp$lambda[s, ], nrow = M * O, ncol = K, byrow = TRUE)
   Eta <- matrix(reg.bfa_sp$eta[s, ], ncol = 1)
-  Mean <- Mean + matrix(kronecker(diag(Nu), Lambda) %*% Eta, nrow = M * O, ncol = Nu)
+  Beta <- matrix(reg.bfa_sp$beta[s, ], ncol = 1)
+  Mean <- Mean + matrix(kronecker(diag(Nu), Lambda) %*% Eta + X %*% Beta, nrow = M * O, ncol = Nu)
 }
 Mean <- Mean / dim(reg.bfa_sp$rho)[1]
 
 
-
-
 time <- 10
-Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)[1:51 , time]
+Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)[52:102, time]
+Trialst <- matrix(reg.bfa_sp$datobj$Trials, nrow = M * O, ncol = Nu)[52:102, time]
+Predt <- Trialst * exp(Mean[52:102, time]) / (1 + exp(Mean[52:102, time]))
+
+Predt2 <- apply(pred$Y$Y11, 2, mean)[52:102]
+
+Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)[1:51, time]
 Trialst <- matrix(reg.bfa_sp$datobj$Trials, nrow = M * O, ncol = Nu)[1:51, time]
 Predt <- Trialst * exp(Mean[1:51, time]) / (1 + exp(Mean[1:51, time]))
 
 Predt2 <- apply(pred$Y$Y11, 2, mean)[1:51]
 
-quantities_of_interest <- rnorm(51)
+
+
 ### libraries
 library(tidyverse)
 library(sf)
