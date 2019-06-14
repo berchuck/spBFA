@@ -21,7 +21,7 @@ CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, tempor
   }
   if (!clustering) {
     LInf = 0
-    L <- M * O
+    L <- 1
   }
   
   ###Covariates
@@ -416,11 +416,10 @@ CreatePara <- function(starting, DatObj, HyPara) {
   ###Create atom variances (Tau2) and atoms themselves (Theta)
   if (GS == 1) Tau <- matrix(cumprod(Delta), nrow = K, ncol = 1)
   if (GS == 0) Tau <- Delta
-  Theta <- apply(sqrt(1 / Tau), 1, function(x) rnorm(L, 0, x))
+  Theta <- matrix(apply(sqrt(1 / Tau), 1, function(x) rnorm(L, 0, x)), nrow = L, K)
   
   ###Create label parameters
-  if (CL == 1) Xi <- matrix(0, nrow = M * O, ncol = K)
-  if (CL == 0) Xi <- matrix(0:(L - 1), nrow = M * O, ncol = K)
+  Xi <- matrix(0, nrow = M * O, ncol = K)
   Lambda <- matrix(nrow = M * O, ncol = K)
   for (o in 1:O) {
     for (i in 1:M) {

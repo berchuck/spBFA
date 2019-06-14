@@ -127,7 +127,7 @@ the hyperparameters (A1 and A2) indicate the shape and rate for a gamma prior on
 is fixed as an identity matrix. This specification overrides the \code{spatial.structure} input.}
 
 \item{clustering}{A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
-each row of the factor loadings matrix is forced to belong to its own cluster.}
+each column is instead modeled with an independent spatial process.}
 }
 \value{
 \code{bfa_sp} returns a list containing the following objects

@@ -119,7 +119,7 @@
 #'  is fixed as an identity matrix. This specification overrides the \code{spatial.structure} input.
 #'  
 #' @param clustering A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
-#'  each row of the factor loadings matrix is forced to belong to its own cluster.
+#'  each column is instead modeled with an independent spatial process.
 #'
 #' @details Details of the underlying statistical model proposed by
 #'  Berchuck et al. 2019. are forthcoming.
@@ -197,7 +197,7 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
   # K = K
   # L = Inf
   # gamma.shrinkage = FALSE
-  # include.space = FALSE
+  # include.space = TRUE
   # clustering = FALSE
   
   ###Check for missing objects

@@ -10,6 +10,7 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
   if (!is.logical(gamma.shrinkage)) stop('"gamma.shrinkage" must be a logical')
   if (!is.logical(include.space)) stop('"include.space" must be a logical')
   if (!is.logical(clustering)) stop('"clustering" must be a logical')
+  if (!clustering & gamma.shrinkage) stop('gamma.shrinkage prior cannot be used without clustering')
   
   ###Family
   if ((length(family) != O) & (length(family) != 1)) stop(paste0('family: must have 1 or O = ', O, ' entries'))

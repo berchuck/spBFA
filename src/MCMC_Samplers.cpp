@@ -819,63 +819,135 @@ para SampleKappa(datobj DatObj, para Para, hypara HyPara) {
 //Function to sample alphajl(s_i)'s using a Gibbs sampler step---------------------------------------------------------------
 para SampleAlpha(datobj DatObj, para Para) {
   
-  //Set data objects
-  int K = DatObj.K;
-  int M = DatObj.M;
-  int O = DatObj.O;
-  int L = DatObj.L;
-  arma::mat EyeOM = DatObj.EyeOM;
-  int LInf = DatObj.LInf;
+  //Different samplers depending on whether a BNP model is used
+  if (DatObj.CL == 1) {
   
-  //Set parameter objects
-  arma::mat KappaInv = Para.KappaInv;
-  arma::cube Z = Para.Z;
-  arma::cube Alpha = Para.Alpha;
-  arma::colvec LStarJ = Para.LStarJ;
-  arma::mat U = Para.U;
-  arma::mat SpCovInv = Para.SpCovInv;
-  
-  //Upper bound for L
-  int UpperL = L;
-  
-  //Covariance object
-  arma::mat CovAlpha = CholInv(EyeOM + arma::kron(KappaInv, SpCovInv));
-  
-  //Loop over columns K
-  for (arma::uword j = 0; j < K; j++) {
+    //Set data objects
+    int K = DatObj.K;
+    int M = DatObj.M;
+    int O = DatObj.O;
+    int L = DatObj.L;
+    arma::mat EyeOM = DatObj.EyeOM;
+    int LInf = DatObj.LInf;
     
-    //Get jth process objects
-    arma::mat AlphaJ = Alpha.slice(j); 
-    arma::mat ZJ = Z.slice(j);
-    if (LInf == 1) UpperL = LStarJ(j);
+    //Set parameter objects
+    arma::mat KappaInv = Para.KappaInv;
+    arma::cube Z = Para.Z;
+    arma::cube Alpha = Para.Alpha;
+    arma::colvec LStarJ = Para.LStarJ;
+    arma::mat U = Para.U;
+    arma::mat SpCovInv = Para.SpCovInv;
     
-    //Loop over clusters L
-    for (arma::uword l = 0; l < UpperL; l++) {
+    //Upper bound for L
+    int UpperL = L;
+    
+    //Covariance object
+    arma::mat CovAlpha = CholInv(EyeOM + arma::kron(KappaInv, SpCovInv));
+    
+    //Loop over columns K
+    for (arma::uword j = 0; j < K; j++) {
       
-      //Sample AlphaJL
-      arma::colvec MeanAlpha = CovAlpha * arma::trans(ZJ.row(l));
-      arma::colvec AlphaJL = rmvnormRcpp(1, MeanAlpha, CovAlpha);
-      AlphaJ.row(l) = arma::trans(AlphaJL);  
+      //Get jth process objects
+      arma::mat AlphaJ = Alpha.slice(j); 
+      arma::mat ZJ = Z.slice(j);
+      if (LInf == 1) UpperL = LStarJ(j);
+      
+      //Loop over clusters L
+      for (arma::uword l = 0; l < UpperL; l++) {
         
-    //End loop over clusters  
-    }
+        //Sample AlphaJL
+        arma::colvec MeanAlpha = CovAlpha * arma::trans(ZJ.row(l));
+        arma::colvec AlphaJL = rmvnormRcpp(1, MeanAlpha, CovAlpha);
+        AlphaJ.row(l) = arma::trans(AlphaJL);  
+          
+      //End loop over clusters  
+      }
+        
+      //Update Z
+      Alpha.slice(j) = AlphaJ;
       
-    //Update Z
-    Alpha.slice(j) = AlphaJ;
+    //End loop over columns 
+    }
     
-  //End loop over columns 
+    //Update Weights
+    arma::cube Weights = GetWeights(Alpha, K, M, L, O);
+    arma::cube logWeights = GetlogWeights(Alpha, K, M, L, O);
+    if (LInf == 1) LStarJ = GetLStarJ(U, Weights, K, M, O);
+    
+    //Update parameters object
+    Para.Alpha = Alpha;
+    Para.logWeights = logWeights;
+    Para.Weights = Weights;
+    Para.LStarJ = LStarJ;
+   
+  //End sampler for BNP version 
   }
-  
-  //Update Weights
-  arma::cube Weights = GetWeights(Alpha, K, M, L, O);
-  arma::cube logWeights = GetlogWeights(Alpha, K, M, L, O);
-  if (LInf == 1) LStarJ = GetLStarJ(U, Weights, K, M, O);
-  
-  //Update parameters object
-  Para.Alpha = Alpha;
-  Para.logWeights = logWeights;
-  Para.Weights = Weights;
-  Para.LStarJ = LStarJ;
+
+  //Sampler for non-BNP version
+  if (DatObj.CL == 0) {
+    
+    //Set data objects
+    int K = DatObj.K;
+    int M = DatObj.M;
+    int O = DatObj.O;
+    int Nu = DatObj.Nu;
+    arma::mat EyeNu = DatObj.EyeNu;
+    arma::mat X = DatObj.X;
+    arma::Col<int> Indeces = DatObj.Indeces;
+    arma::mat YStarWide = DatObj.YStarWide;
+
+    //Set parameter objects
+    arma::mat KappaInv = Para.KappaInv;
+    arma::mat SpCovInv = Para.SpCovInv;
+    arma::mat BigPhi = Para.BigPhi;
+    arma::cube Cov = Para.Cov;
+    arma::colvec Beta = Para.Beta;
+    arma::mat Lambda = Para.Lambda;
+    arma::colvec Eta = Para.Eta;
+    arma::colvec XBeta = Para.XBeta;
+
+    //Covariance object
+    arma::mat CovAlphaFixed = arma::kron(KappaInv, SpCovInv);
+    
+    //Loop over columns K
+    arma::cube Alpha(1, M * O, K);
+    for (arma::uword j = 0; j < K; j++) {
+      
+      //Factor specific objects
+      arma::mat LambdaMinusJ = Lambda, BigPhiMinusJ = BigPhi;
+      LambdaMinusJ.shed_col(j);
+      BigPhiMinusJ.shed_row(j);
+      
+      //Loop over time
+      arma::mat Sum1(M * O, M * O, arma::fill::zeros);
+      arma::colvec Sum2(M * O, arma::fill::zeros);
+      for (arma::uword t = 0; t < Nu; t++) {
+        arma::mat SigmaTInv = arma::diagmat(arma::vectorise(1 / Cov.slice(t)));
+        arma::mat XT = X.rows(find(Indeces == t));
+        double EtaTJ = BigPhi(j, t);
+        arma::colvec LambdaSum(M * O, arma::fill::zeros);
+        for (arma::uword h = 0; h < (K - 1); h++) LambdaSum += LambdaMinusJ.col(h) * BigPhiMinusJ(h, t);
+        arma::colvec MuTJ = (YStarWide.col(t) - XT * Beta - LambdaSum);
+        Sum1 += SigmaTInv * (EtaTJ * EtaTJ);
+        Sum2 += EtaTJ * SigmaTInv * MuTJ;
+      }
+      
+      //Sample AlphaJ
+      arma::mat CovAlpha = CholInv(Sum1 + CovAlphaFixed);
+      arma::colvec MeanAlpha = CovAlpha * Sum2;
+      arma::colvec AlphaJ = rmvnormRcpp(1, MeanAlpha, CovAlpha);
+      Alpha(arma::span(0, 0), arma::span::all, arma::span(j, j)) = AlphaJ;  
+      
+    //End loop over columns 
+    }
+    
+    //Update parameters object
+    Para.Alpha = Alpha;
+    Para.Lambda = Alpha(arma::span(0, 0), arma::span::all, arma::span::all);
+    Para.Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
+
+  //End non-BNP sampler  
+  }
   return Para;
   
 }

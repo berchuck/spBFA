@@ -9,6 +9,7 @@ FormatSamples <- function(DatObj, RawSamples) {
   C <- DatObj$C
   P <- DatObj$P
   GS <- DatObj$GS
+  CL <- DatObj$CL
   
   ###Format raw samples
   RawSamples <- t(RawSamples)
@@ -44,6 +45,7 @@ FormatSamples <- function(DatObj, RawSamples) {
   colnames(Rho) <- "Rho"
   if (P == 0) Beta <- NULL
   if (P > 0) colnames(Beta) <- paste0("Beta", 1:P)
+  if (CL == 0) Tau <- Delta <- Xi <- NULL
   Out <- list(Lambda = Lambda, Eta = Eta, Sigma2 = Sigma2, Kappa = Kappa, Delta = Delta, Tau = Tau, Upsilon = Upsilon, Psi = Psi, Xi = Xi, Rho = Rho, Beta = Beta)
   return(Out)
 }

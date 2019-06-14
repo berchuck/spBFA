@@ -50,7 +50,7 @@ Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
 Tuning <- list(Psi = 1)
 MCMC <- list(NBurn = 1000, NSims = 1000, NThin = 1, NPilot = 10)
 reg.bfa_sp <- bfa_sp(TD ~ 0, data = dat, dist = W, time = Time, K = K, starting = Starting, hypers = Hypers, tuning = Tuning, mcmc = MCMC,
-                     gamma.shrinkage = TRUE, include.space = TRUE, clustering = FALSE)
+                     gamma.shrinkage = FALSE, include.space = TRUE, clustering = FALSE)
 
 Yt <- matrix(reg.bfa_sp$datobj$YObserved, nrow = M * O, ncol = Nu)
 

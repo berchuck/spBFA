@@ -24,6 +24,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   int NTotal = McmcObj.NTotal;
   int NBurn = McmcObj.NBurn;
   int LInf = DatObj.LInf;
+  int BNP = DatObj.CL;
   arma::vec WhichPilotAdapt = McmcObj.WhichPilotAdapt;
   arma::vec WhichKeep = McmcObj.WhichKeep;
   arma::vec WhichBurnInProgress = McmcObj.WhichBurnInProgress;
@@ -52,13 +53,13 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     }
     
     //Gibbs step for Theta
-    Para = SampleTheta(DatObj, Para);
+    if (BNP == 1) Para = SampleTheta(DatObj, Para);
 
     //Gibbs step for Xi
-    if (DatObj.CL == 1) Para = SampleXi(DatObj, Para);
+    if (BNP == 1) Para = SampleXi(DatObj, Para);
     
     //Gibbs step for Z
-    Para = SampleZ(DatObj, Para);
+    if (BNP == 1) Para = SampleZ(DatObj, Para);
 
     //Gibbs step for Alpha
     Para = SampleAlpha(DatObj, Para);
@@ -74,7 +75,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     }
   
     //Gibbs step for Delta
-    Para = SampleDelta(DatObj, Para, HyPara);
+    if (BNP == 1) Para = SampleDelta(DatObj, Para, HyPara);
 
     //Gibbs step for Eta
     Para = SampleEta(DatObj, Para, HyPara);
