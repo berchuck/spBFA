@@ -349,6 +349,7 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   //Set data objects
   int Nu = DatObj.Nu;
   arma::mat EyeO = DatObj.EyeO;
+  int K = DatObj.K;
 
   //Set parameters
   arma::mat BigPhi = Para.BigPhi;
@@ -365,8 +366,15 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   //Sample Upsilon
   double n = Zeta + Nu;
   arma::mat V = SPhiPsi + Omega;
-  arma::mat UpsilonInv = rwishRcpp(n, CholInv(V));
-  arma::mat Upsilon = CholInv(UpsilonInv);
+  arma::mat Upsilon(K, K), UpsilonInv(K, K);
+  if (K == 1) {
+    Upsilon(0, 0) = rigammaRcpp(0.5 * n, 0.5 * arma::as_scalar(V));
+    UpsilonInv = 1 / Upsilon;
+  }
+  if (K > 1) {
+    arma::mat UpsilonInv = rwishRcpp(n, CholInv(V));
+    arma::mat Upsilon = CholInv(UpsilonInv);
+  }
   
   //Update parameters object
   Para.Upsilon = Upsilon;
@@ -504,7 +512,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
     
     //Get SigmaInv
     arma::mat SigmaInv = arma::diagmat(1 / arma::vectorise(Sigma2));
-  
+
     //Sample eta
     arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaInv;
     arma::mat CovEta = CholInv(arma::kron(EyeNu, tLambdaSigmaInv * Lambda) + arma::kron(HPsiInv, UpsilonInv));
@@ -936,14 +944,15 @@ para SampleAlpha(datobj DatObj, para Para) {
       arma::mat CovAlpha = CholInv(Sum1 + CovAlphaFixed);
       arma::colvec MeanAlpha = CovAlpha * Sum2;
       arma::colvec AlphaJ = rmvnormRcpp(1, MeanAlpha, CovAlpha);
-      Alpha(arma::span(0, 0), arma::span::all, arma::span(j, j)) = AlphaJ;  
+      Alpha(arma::span(0, 0), arma::span::all, arma::span(j, j)) = AlphaJ; 
+      Lambda.col(j) = AlphaJ;
       
     //End loop over columns 
     }
     
     //Update parameters object
     Para.Alpha = Alpha;
-    Para.Lambda = Alpha(arma::span(0, 0), arma::span::all, arma::span::all);
+    Para.Lambda = Lambda;
     Para.Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
 
   //End non-BNP sampler  
