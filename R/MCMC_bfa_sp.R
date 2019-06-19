@@ -196,9 +196,9 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
   # seed = 54
   # K = K
   # L = Inf
-  # gamma.shrinkage = FALSE
+  # gamma.shrinkage = TRUE
   # include.space = TRUE
-  # clustering = FALSE
+  # clustering = TRUE
   
   ###Check for missing objects
   if (missing(formula)) stop("formula: missing")

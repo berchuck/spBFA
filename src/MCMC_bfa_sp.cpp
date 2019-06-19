@@ -82,7 +82,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     
     //Gibbs step for Upsilon
     Para = SampleUpsilon(DatObj, Para, HyPara);
-
+    
     // Metropolis step for Psi
     Update = SamplePsi(DatObj, Para, HyPara, MetrObj);
     Para = Update.first;

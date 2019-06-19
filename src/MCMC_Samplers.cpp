@@ -176,8 +176,6 @@ para SampleSigma2(datobj DatObj, para Para, hypara HyPara) {
   arma::colvec Mean = Para.Mean;
   arma::mat MeanMat = arma::reshape(Mean, M * O, Nu);
   arma::mat Sigma2 = Para.Sigma2;
-  arma::mat Lambda = Para.Lambda;
-  arma::mat Upsilon = Para.Upsilon;
   arma::cube Cov = Para.Cov;
 
   //Set hyperparameter objects
@@ -367,13 +365,12 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   double n = Zeta + Nu;
   arma::mat V = SPhiPsi + Omega;
   arma::mat Upsilon(K, K), UpsilonInv(K, K);
-  if (K == 1) {
+  if (K > 1) {
+    UpsilonInv = rwishRcpp(n, CholInv(V));
+    Upsilon = CholInv(UpsilonInv);
+  } else {
     Upsilon(0, 0) = rigammaRcpp(0.5 * n, 0.5 * arma::as_scalar(V));
     UpsilonInv = 1 / Upsilon;
-  }
-  if (K > 1) {
-    arma::mat UpsilonInv = rwishRcpp(n, CholInv(V));
-    arma::mat Upsilon = CholInv(UpsilonInv);
   }
   
   //Update parameters object
