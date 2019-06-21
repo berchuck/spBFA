@@ -43,6 +43,7 @@ CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, tempor
   EyeOM <- diag(O * M)
   SeqL <- matrix(0:(L - 1), ncol = 1)
   EyeKbyNu <- diag(K * Nu)
+  EyeK <- diag(K)
   ZeroKbyNu <- matrix(0, nrow = K * Nu)
   ZeroM <- matrix(0, nrow = M)
   ZeroOM <- matrix(0, nrow = O * M)
@@ -110,6 +111,7 @@ CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, tempor
   DatObj$EyeO <- EyeO
   DatObj$SeqL <- SeqL
   DatObj$EyeM <- EyeM
+  DatObj$EyeK <- EyeK
   DatObj$EyeOM <- EyeOM
   DatObj$EyeKbyNu <- EyeKbyNu
   DatObj$ZeroKbyNu <- ZeroKbyNu

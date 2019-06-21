@@ -463,6 +463,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   
   //Set data objects
   arma::mat EyeNu = DatObj.EyeNu;
+  arma::mat EyeK = DatObj.EyeK;
   arma::colvec YStar = DatObj.YStar;
   arma::mat YStarWide = DatObj.YStarWide;
   int K = DatObj.K;
@@ -470,7 +471,6 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   int Nu = DatObj.Nu;
   int M = DatObj.M;
   int O = DatObj.O;
-  arma::mat EyeO = DatObj.EyeO;
   arma::Col<int> FamilyInd = DatObj.FamilyInd;
   
   //Set parameters
@@ -491,21 +491,32 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
     //Loop over t
     for (arma::uword t = 0; t < Nu; t++) {
       
+      //Conditional moments
+      arma::uvec IndecesMinusT;
+      arma::uvec IndecesT(1);
+      IndecesT(0) = t;
+      arma::mat BigPhiMinusT = BigPhi;
+      arma::rowvec HPlus = HPsi(IndecesT, IndecesMinusT) * CholInv(HPsi(IndecesMinusT, IndecesMinusT)) ;
+      double HStarInv = 1 / arma::as_scalar(HPsi(IndecesT, IndecesT) - HPlus * HPsi(IndecesMinusT, IndecesT));
+      arma::colvec CondMuEta = arma::kron(HPlus, EyeK) * arma::vectorise(BigPhiMinusT);
+      arma::mat CondPrecEta = HStarInv * UpsilonInv;
+      
       //Sample EtaT
       arma::mat SigmaTInv = arma::diagmat(arma::vectorise(1 / Cov.slice(t)));
       arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaTInv;
-      arma::mat CovEtaT = CholInv(tLambdaSigmaInv * Lambda + UpsilonInv / HPsi(t, t));
-      arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * (YStarWide.col(t) - XBetaMat.col(t)));
-      BigPhi.col(t) = rmvnormRcpp(1, MeanEtaT, CovEtaT);
-     
+      arma::mat CovEtaT = CholInv(tLambdaSigmaInv * Lambda + CondPrecEta);
+      arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * (YStarWide.col(t) - XBetaMat.col(t)) + CondPrecEta * CondMuEta);
+      arma::colvec EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
+      EtaT = (EtaT - arma::mean(EtaT)); //center on the fly
+      BigPhi.col(t) = EtaT;
+      
     //End loop over visits 
     }
     
     //Update parameters dependent on delta
     Eta = arma::vectorise(BigPhi);
-    Mean = arma::kron(EyeNu, Lambda) * Eta;
-    
-  } else{
+
+  } else {
     
     //Get SigmaInv
     arma::mat SigmaInv = arma::diagmat(1 / arma::vectorise(Sigma2));
@@ -518,14 +529,16 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
     
     //Update parameters dependent on delta
     BigPhi = arma::reshape(Eta, K, Nu);
-    Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
+    arma::vec means = arma::mean(BigPhi, 0);
+    for (arma::uword t = 0; t < Nu; t++) BigPhi.col(t) = (BigPhi.col(t) - means(t)); //center on the fly
+    Eta = arma::vectorise(BigPhi);
     
   }
   
   //Update parameters object
   Para.Eta = Eta;
   Para.BigPhi = BigPhi;
-  Para.Mean = Mean;
+  Para.Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
   return Para;
   
 }

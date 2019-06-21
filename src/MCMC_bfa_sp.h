@@ -38,6 +38,7 @@ struct datobj {
   arma::mat EyeNu;
   arma::Col<int> SeqL;
   arma::mat EyeM;
+  arma::mat EyeK;
   arma::mat EyeO;
   arma::mat EyeOM;
   arma::mat EyeKbyNu;

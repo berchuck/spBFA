@@ -29,6 +29,7 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   arma::Col<int> SeqL = DatObj_List["SeqL"];
   arma::mat EyeM = DatObj_List["EyeM"];
   arma::mat EyeO = DatObj_List["EyeO"];
+  arma::mat EyeK = DatObj_List["EyeK"];
   arma::mat EyeOM = DatObj_List["EyeOM"];
   arma::mat EyeKbyNu = DatObj_List["EyeKbyNu"];
   arma::colvec ZeroKbyNu = DatObj_List["ZeroKbyNu"];
@@ -68,6 +69,7 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.EyeO = EyeO;
   DatObj.SeqL = SeqL;
   DatObj.EyeM = EyeM;
+  DatObj.EyeK = EyeK;
   DatObj.EyeOM = EyeOM;
   DatObj.EyeKbyNu = EyeKbyNu;
   DatObj.ZeroOM = ZeroOM;
