@@ -121,6 +121,8 @@
 #' @param clustering A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
 #'  each column is instead modeled with an independent spatial process.
 #'
+#' @param center.factors A logical indicating whether the factors should be centered at each time point. Default is TRUE.
+#'  
 #' @details Details of the underlying statistical model proposed by
 #'  Berchuck et al. 2019. are forthcoming.
 #'
@@ -178,7 +180,7 @@
 bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
                    family = "normal", temporal.structure = "exponential", spatial.structure = "discrete",
                    starting = NULL, hypers = NULL, tuning = NULL, mcmc = NULL, seed = 54,
-                   gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE) {
+                   gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE, center.factors = TRUE) {
   
   ###Function Inputs
   # formula = TD ~ 0
@@ -208,7 +210,7 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
   if (missing(K)) stop("K: missing")
 
   ###Check model inputs
-  CheckInputs(formula, data, dist, time, K, L, trials, starting, hypers, tuning, mcmc, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering)
+  CheckInputs(formula, data, dist, time, K, L, trials, starting, hypers, tuning, mcmc, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering, center.factors)
 
   ####Set seed for reproducibility
   set.seed(seed)
@@ -217,7 +219,7 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
   Interactive <- interactive()
 
   ###Create objects for use in sampler
-  DatObj <- CreateDatObj(formula, data, dist, time, trials, K, L, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering)
+  DatObj <- CreateDatObj(formula, data, dist, time, trials, K, L, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering, center.factors)
   HyPara <- CreateHyPara(hypers, DatObj) 
   MetrObj <- CreateMetrObj(tuning, DatObj)
   Para <- CreatePara(starting, DatObj, HyPara)

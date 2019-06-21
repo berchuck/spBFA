@@ -471,6 +471,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   int Nu = DatObj.Nu;
   int M = DatObj.M;
   int O = DatObj.O;
+  int CF = DatObj.CF;
   arma::Col<int> FamilyInd = DatObj.FamilyInd;
   
   //Set parameters
@@ -507,7 +508,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
       arma::mat CovEtaT = CholInv(tLambdaSigmaInv * Lambda + CondPrecEta);
       arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * (YStarWide.col(t) - XBetaMat.col(t)) + CondPrecEta * CondMuEta);
       arma::colvec EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
-      EtaT = (EtaT - arma::mean(EtaT)); //center on the fly
+      if (CF == 1) EtaT = (EtaT - arma::mean(EtaT)); //center on the fly
       BigPhi.col(t) = EtaT;
       
     //End loop over visits 
@@ -525,12 +526,14 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
     arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaInv;
     arma::mat CovEta = CholInv(arma::kron(EyeNu, tLambdaSigmaInv * Lambda) + arma::kron(HPsiInv, UpsilonInv));
     arma::colvec MeanEta = CovEta * arma::kron(EyeNu, tLambdaSigmaInv) * (YStar - XBeta);
-    arma::colvec Eta = rmvnormRcpp(1, MeanEta, CovEta);
+    Eta = rmvnormRcpp(1, MeanEta, CovEta);
     
     //Update parameters dependent on delta
     BigPhi = arma::reshape(Eta, K, Nu);
-    arma::vec means = arma::mean(BigPhi, 0);
-    for (arma::uword t = 0; t < Nu; t++) BigPhi.col(t) = (BigPhi.col(t) - means(t)); //center on the fly
+    if (CF == 1) {
+      arma::rowvec means = arma::mean(BigPhi, 0);
+      for (arma::uword t = 0; t < Nu; t++) BigPhi.col(t) = (BigPhi.col(t) - means(t)); //center on the fly
+    }
     Eta = arma::vectorise(BigPhi);
     
   }

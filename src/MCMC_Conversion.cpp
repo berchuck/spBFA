@@ -23,6 +23,7 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   int GS = DatObj_List["GS"];
   int IS = DatObj_List["IS"];
   int CL = DatObj_List["CL"];
+  int CF = DatObj_List["CF"];
   arma::Col<int> FamilyInd = DatObj_List["FamilyInd"];
   int LInf = DatObj_List["LInf"];
   arma::mat EyeNu = DatObj_List["EyeNu"];
@@ -61,6 +62,7 @@ datobj ConvertDatObj(Rcpp::List DatObj_List) {
   DatObj.GS = GS;
   DatObj.IS = IS;
   DatObj.CL = CL;
+  DatObj.CF = CF;
   DatObj.TempCorInd = TempCorInd;
   DatObj.SpCorInd  = SpCorInd;
   DatObj.FamilyInd = FamilyInd;

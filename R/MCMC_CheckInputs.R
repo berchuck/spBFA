@@ -1,4 +1,4 @@
-CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hypers, tuning, mcmc, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering) {
+CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hypers, tuning, mcmc, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering, center.factors) {
   
   ###Data dimensions
   N <- dim(data)[1]
@@ -11,6 +11,7 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
   if (!is.logical(include.space)) stop('"include.space" must be a logical')
   if (!is.logical(clustering)) stop('"clustering" must be a logical')
   if (!clustering & gamma.shrinkage) stop('gamma.shrinkage prior cannot be used without clustering')
+  if (!is.logical(center.factors)) stop('"center.factors" must be a logical')
   
   ###Family
   if ((length(family) != O) & (length(family) != 1)) stop(paste0('family: must have 1 or O = ', O, ' entries'))

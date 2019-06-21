@@ -24,6 +24,7 @@ struct datobj {
   int GS;
   int IS;
   int CL;
+  int CF;
   arma::Col<int> FamilyInd;
   arma::Col<int> Indeces;
   int TempCorInd;
