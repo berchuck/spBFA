@@ -183,24 +183,25 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
                    gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE, center.factors = TRUE) {
   
   ###Function Inputs
-  # formula = TD ~ 0
-  # data = dat
+  # formula = malaria ~ rain + temp + season
+  # data = analdata
   # dist = W
   # time = Time
-  # trials = NULL
+  # trials = "population"
   # starting = Starting
   # hypers = Hypers
   # tuning = Tuning
   # mcmc = MCMC
-  # family = "normal"
+  # family = "binomial"
   # temporal.structure = "exponential"
   # spatial.structure = "discrete"
   # seed = 54
   # K = K
   # L = Inf
-  # gamma.shrinkage = TRUE
-  # include.space = TRUE
-  # clustering = TRUE
+  # gamma.shrinkage = FALSE
+  # include.space = FALSE
+  # clustering = FALSE
+  # center.factors = TRUE
   
   ###Check for missing objects
   if (missing(formula)) stop("formula: missing")

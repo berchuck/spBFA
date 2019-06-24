@@ -140,7 +140,7 @@ std::pair<datobj, para> SampleY(datobj DatObj, para Para, dataug DatAug) {
         arma::mat omegaInv = arma::pow(omega, -1);
         
         //Update Polya-Gamma objects
-        YStarOut(arma::span::all, arma::span(f, f), arma::span::all) = chi % omegaInv;
+        YStarOut(arma::span::all, arma::span(f, f), arma::span::all) = (chi % omegaInv);
         Cov(arma::span::all, arma::span(f, f), arma::span::all) = omegaInv;
   
       }
@@ -361,6 +361,8 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   //Compute SPhiPsi
   arma::mat SPhiPsi = BigPhi * HPsiInv * arma::trans(BigPhi);
   
+  // Rcpp::Rcout << std::fixed << SPhiPsi << std::endl;
+  
   //Sample Upsilon
   double n = Zeta + Nu;
   arma::mat V = SPhiPsi + Omega;
@@ -386,12 +388,9 @@ para SampleBeta(datobj DatObj, para Para, hypara HyPara) {
   
   //Set data objects
   arma::mat EyeNu = DatObj.EyeNu;
-  arma::colvec YStar = DatObj.YStar;
   arma::mat YStarWide = DatObj.YStarWide;
-  int N = DatObj.N;
   int Nu = DatObj.Nu;
   int P = DatObj.P;
-  arma::Col<int> FamilyInd = DatObj.FamilyInd;
   arma::mat X = DatObj.X;
   arma::Col<int> Indeces = DatObj.Indeces;
   
@@ -405,49 +404,27 @@ para SampleBeta(datobj DatObj, para Para, hypara HyPara) {
   //Set hyperparameters
   arma::mat SigmaBetaInv = HyPara.SigmaBetaInv;
   arma::colvec SigmaBetaInvMuBeta = HyPara.SigmaBetaInvMuBeta;
-  
-  //If there are count variables
-  arma::colvec Mean(N), XBeta(N);
-  arma::colvec Beta(P);
-  if (any(FamilyInd == 3)) {
-    
-    //Compute moments
-    arma::mat Sum1(P, P, arma::fill::zeros);
-    arma::colvec Sum2(P, arma::fill::zeros);
-    for (arma::uword t = 0; t < Nu; t++) {
-      arma::mat SigmaTInv = arma::diagmat(arma::vectorise(1 / Cov.slice(t)));
-      arma::mat XT = X.rows(find(Indeces == t));
-      arma::mat tXTSigmaTInv = arma::trans(XT) * SigmaTInv;
-      Sum1 += tXTSigmaTInv * XT;
-      Sum2 += tXTSigmaTInv * (YStarWide.col(t) - Lambda * BigPhi.col(t));
-    }
-    
-    //Sample Beta
-    arma::mat CovBeta = CholInv(Sum1 + Nu * SigmaBetaInv);
-    arma::colvec MeanBeta = CovBeta * (Sum2 + Nu * SigmaBetaInvMuBeta);
-    Beta = rmvnormRcpp(1, MeanBeta, CovBeta);
-    
-    //Update parameters dependent on delta
-    XBeta = X * Beta;
-    Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
-    
-  } else{
-    
-    //Get SigmaInv
-    arma::mat SigmaInv = arma::diagmat(1 / arma::vectorise(Sigma2));
-    
-    //Sample beta
-    arma::mat tXSigmaInv = arma::trans(X) * arma::kron(EyeNu, SigmaInv);
-    arma::mat CovBeta = CholInv(tXSigmaInv * X + SigmaBetaInv);
-    arma::colvec MeanBeta = CovBeta * (tXSigmaInv * (YStar - arma::kron(EyeNu, Lambda) * Eta) + SigmaBetaInvMuBeta);
-    arma::colvec Beta = rmvnormRcpp(1, MeanBeta, CovBeta);
-    
-    //Update parameters dependent on delta
-    XBeta = X * Beta;
-    Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
-    
+
+  //Compute moments
+  arma::mat Sum1(P, P, arma::fill::zeros);
+  arma::colvec Sum2(P, arma::fill::zeros);
+  for (arma::uword t = 0; t < Nu; t++) {
+    arma::mat SigmaTInv = arma::diagmat(arma::vectorise(1 / Cov.slice(t)));
+    arma::mat XT = X.rows(find(Indeces == t));
+    arma::mat tXTSigmaTInv = arma::trans(XT) * SigmaTInv;
+    Sum1 += tXTSigmaTInv * XT;
+    Sum2 += tXTSigmaTInv * (YStarWide.col(t) - Lambda * BigPhi.col(t));
   }
   
+  //Sample Beta
+  arma::mat CovBeta = CholInv(Sum1 + Nu * SigmaBetaInv);
+  arma::colvec MeanBeta = CovBeta * (Sum2 + Nu * SigmaBetaInvMuBeta);
+  arma::colvec Beta = rmvnormRcpp(1, MeanBeta, CovBeta);
+  
+  //Update parameters dependent on delta
+  arma::colvec XBeta = X * Beta;
+  arma::colvec Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
+
   //Update parameters object
   Para.Beta = Beta;
   Para.Mean = Mean;
@@ -464,79 +441,53 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   //Set data objects
   arma::mat EyeNu = DatObj.EyeNu;
   arma::mat EyeK = DatObj.EyeK;
-  arma::colvec YStar = DatObj.YStar;
   arma::mat YStarWide = DatObj.YStarWide;
   int K = DatObj.K;
-  int N = DatObj.N;
   int Nu = DatObj.Nu;
   int M = DatObj.M;
   int O = DatObj.O;
   int CF = DatObj.CF;
-  arma::Col<int> FamilyInd = DatObj.FamilyInd;
-  
+
   //Set parameters
+  arma::mat BigPhi = Para.BigPhi;
   arma::mat Lambda = Para.Lambda;
-  arma::mat Sigma2 = Para.Sigma2;
   arma::cube Cov = Para.Cov;
   arma::mat HPsi = Para.HPsi;
-  arma::mat HPsiInv = Para.HPsiInv;
   arma::mat UpsilonInv = Para.UpsilonInv;
   arma::colvec XBeta = Para.XBeta;
   arma::mat XBetaMat = arma::reshape(XBeta, M * O, Nu);
 
-  //If there are count variables
-  arma::colvec Mean(N), Eta(Nu * K);
-  arma::mat BigPhi(K, Nu);
-  if (any(FamilyInd == 3)) {
-    
-    //Loop over t
-    for (arma::uword t = 0; t < Nu; t++) {
-      
-      //Conditional moments
-      arma::uvec IndecesMinusT;
-      arma::uvec IndecesT(1);
-      IndecesT(0) = t;
-      arma::mat BigPhiMinusT = BigPhi;
-      arma::rowvec HPlus = HPsi(IndecesT, IndecesMinusT) * CholInv(HPsi(IndecesMinusT, IndecesMinusT)) ;
-      double HStarInv = 1 / arma::as_scalar(HPsi(IndecesT, IndecesT) - HPlus * HPsi(IndecesMinusT, IndecesT));
-      arma::colvec CondMuEta = arma::kron(HPlus, EyeK) * arma::vectorise(BigPhiMinusT);
-      arma::mat CondPrecEta = HStarInv * UpsilonInv;
-      
-      //Sample EtaT
-      arma::mat SigmaTInv = arma::diagmat(arma::vectorise(1 / Cov.slice(t)));
-      arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaTInv;
-      arma::mat CovEtaT = CholInv(tLambdaSigmaInv * Lambda + CondPrecEta);
-      arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * (YStarWide.col(t) - XBetaMat.col(t)) + CondPrecEta * CondMuEta);
-      arma::colvec EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
-      if (CF == 1) EtaT = (EtaT - arma::mean(EtaT)); //center on the fly
-      BigPhi.col(t) = EtaT;
-      
-    //End loop over visits 
-    }
-    
-    //Update parameters dependent on delta
-    Eta = arma::vectorise(BigPhi);
+  //Declarations
+  arma::vec SeqNu = arma::linspace<arma::vec>(0, Nu - 1, Nu);
+  arma::uvec IndecesT(1), IndecesMinusT(Nu - 1);
 
-  } else {
+  //Loop over t
+  for (arma::uword t = 0; t < Nu; t++) {
     
-    //Get SigmaInv
-    arma::mat SigmaInv = arma::diagmat(1 / arma::vectorise(Sigma2));
-
-    //Sample eta
-    arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaInv;
-    arma::mat CovEta = CholInv(arma::kron(EyeNu, tLambdaSigmaInv * Lambda) + arma::kron(HPsiInv, UpsilonInv));
-    arma::colvec MeanEta = CovEta * arma::kron(EyeNu, tLambdaSigmaInv) * (YStar - XBeta);
-    Eta = rmvnormRcpp(1, MeanEta, CovEta);
+    //Conditional moments
+    IndecesMinusT = find(SeqNu != t);
+    IndecesT(0) = t;
+    arma::mat BigPhiMinusT = BigPhi;
+    BigPhiMinusT.shed_col(t);
+    arma::rowvec HPlus = HPsi(IndecesT, IndecesMinusT) * CholInv(HPsi(IndecesMinusT, IndecesMinusT));
+    double HStarInv = 1 / (arma::as_scalar(HPsi(IndecesT, IndecesT) - HPlus * HPsi(IndecesMinusT, IndecesT)));
+    arma::colvec CondMuEta = arma::kron(HPlus, EyeK) * arma::vectorise(BigPhiMinusT);
+    arma::mat CondPrecEta = HStarInv * UpsilonInv;
     
-    //Update parameters dependent on delta
-    BigPhi = arma::reshape(Eta, K, Nu);
-    if (CF == 1) {
-      arma::rowvec means = arma::mean(BigPhi, 0);
-      for (arma::uword t = 0; t < Nu; t++) BigPhi.col(t) = (BigPhi.col(t) - means(t)); //center on the fly
-    }
-    Eta = arma::vectorise(BigPhi);
+    //Sample EtaT
+    arma::mat SigmaTInv = arma::diagmat(arma::vectorise(1 / Cov.slice(t)));
+    arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaTInv;
+    arma::mat CovEtaT = CholInv(tLambdaSigmaInv * Lambda + CondPrecEta);
+    arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * (YStarWide.col(t) - XBetaMat.col(t)) + CondPrecEta * CondMuEta);
+    arma::colvec EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
+    if (CF == 1) EtaT = (EtaT - arma::mean(EtaT)); //center on the fly
+    BigPhi.col(t) = EtaT;
     
+  //End loop over visits
   }
+  
+  //Update parameters dependent on eta
+  arma::colvec Eta = arma::vectorise(BigPhi);
   
   //Update parameters object
   Para.Eta = Eta;
