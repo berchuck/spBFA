@@ -183,25 +183,25 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
                    gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE, center.factors = FALSE) {
   
   ###Function Inputs
-  formula = sens ~ age
-  data = dat
-  dist = W
-  time = Time
-  trials = NULL
-  starting = Starting
-  hypers = Hypers
-  tuning = Tuning
-  mcmc = MCMC
-  family = "tobit"
-  temporal.structure = "exponential"
-  spatial.structure = "discrete"
-  seed = 54
-  K = K
-  L = Inf
-  gamma.shrinkage = TRUE
-  include.space = TRUE
-  clustering = TRUE
-  center.factors = FALSE
+  # formula = sens ~ age
+  # data = dat
+  # dist = W
+  # time = Time
+  # trials = NULL
+  # starting = Starting
+  # hypers = Hypers
+  # tuning = Tuning
+  # mcmc = MCMC
+  # family = "tobit"
+  # temporal.structure = "exponential"
+  # spatial.structure = "discrete"
+  # seed = 54
+  # K = K
+  # L = Inf
+  # gamma.shrinkage = TRUE
+  # include.space = TRUE
+  # clustering = TRUE
+  # center.factors = FALSE
   
   ###Check for missing objects
   if (missing(formula)) stop("formula: missing")
