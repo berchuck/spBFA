@@ -154,17 +154,25 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
       if (!"SmallUpsilon" %in% names(hypers$Kappa)) stop('hypers: "Kappa" value missing for SmallUpsilon')
       if (!is.scalar(hypers$Kappa$SmallUpsilon)) stop('hypers: "SmallUpsilon" must be a scalar')
       if (is.na(hypers$Kappa$SmallUpsilon)) stop('hypers: "SmallUpsilon" cannot be NA')
-      if (!is.finite(hypers$Kappa$SmallUpsilon)) stop('hypers: "Kappa" cannot be infinite')
+      if (!is.finite(hypers$Kappa$SmallUpsilon)) stop('hypers: "SmallUpsilon" cannot be infinite')
       if (hypers$Kappa$SmallUpsilon <= 0) stop('hypers: "SmallUpsilon" must be strictly positive')
       if (!"BigTheta" %in% names(hypers$Kappa)) stop('hypers: "BigTheta" value missing')
-      if (!is.matrix(hypers$Kappa$BigTheta)) stop('hypers: "BigTheta" must be a matrix')
-      if (!dim(hypers$Kappa$BigTheta)[1] == O) stop('hypers: "BigTheta" must be O dimensional')
-      if (!all(!is.na(hypers$Kappa$BigTheta))) stop('hypers: "BigTheta" cannot have missing values')
-      if (!all(is.finite(hypers$Kappa$BigTheta))) stop('hypers: "BigTheta" cannot have infinite values')
-      if (!dim(hypers$Kappa$BigTheta)[2] == O) stop('hypers: "BigTheta" must be square')
-      if (sum( !( (hypers$Kappa$BigTheta) == t(hypers$Kappa$BigTheta) ) ) > 0) stop('hypers: "BigTheta" must be symmetric')
-      if ((det(hypers$Kappa$BigTheta) - 0) < 0.00001) stop('hypers: "BigTheta" is close to singular')
-      
+      if (O > 1) {
+        if (hypers$Kappa$SmallUpsilon < O) stop('hypers: "SmallUpsilon" must be greater than or equal to O')
+        if (!is.matrix(hypers$Kappa$BigTheta)) stop('hypers: "BigTheta" must be a matrix')
+        if (!dim(hypers$Kappa$BigTheta)[1] == O) stop('hypers: "BigTheta" must be O dimensional')
+        if (!all(!is.na(hypers$Kappa$BigTheta))) stop('hypers: "BigTheta" cannot have missing values')
+        if (!all(is.finite(hypers$Kappa$BigTheta))) stop('hypers: "BigTheta" cannot have infinite values')
+        if (!dim(hypers$Kappa$BigTheta)[2] == O) stop('hypers: "BigTheta" must be square')
+        if (sum( !( (hypers$Kappa$BigTheta) == t(hypers$Kappa$BigTheta) ) ) > 0) stop('hypers: "BigTheta" must be symmetric')
+        if ((det(hypers$Kappa$BigTheta) - 0) < 0.00001) stop('hypers: "BigTheta" is close to singular')
+      }
+      if (O == 1) {
+        if (!is.scalar(hypers$Kappa$BigTheta)) stop('hypers: "BigTheta" must be a scalar when O is 1')
+        if (is.na(hypers$Kappa$BigTheta)) stop('hypers: "BigTheta" cannot be NA')
+        if (!is.finite(hypers$Kappa$BigTheta)) stop('hypers: "BigTheta" cannot be infinite')
+        if (hypers$Kappa$BigTheta <= 0) stop('hypers: "BigTheta" must be strictly positive')
+      }
     }
 
     ###If Rho hyperparameters are provided
@@ -208,15 +216,22 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
       if (!is.scalar(hypers$Upsilon$Zeta)) stop('hypers: "Zeta" must be a scalar')
       if (is.na(hypers$Upsilon$Zeta)) stop('hypers: "Zeta" cannot be NA')
       if (!is.finite(hypers$Upsilon$Zeta)) stop('hypers: "Zeta" cannot be infinite')
-      if (hypers$Upsilon$Zeta < K) stop('hypers: "Zeta" must be greater than or equal to K')
       if (!"Omega" %in% names(hypers$Upsilon)) stop('hypers: "Omega" value missing')
-      if (!is.matrix(hypers$Upsilon$Omega)) stop('hypers: "Omega" must be a matrix')
-      if (!dim(hypers$Upsilon$Omega)[1] == K) stop('hypers: "Omega" must be K dimensional')
-      if (!all(!is.na(hypers$Upsilon$Omega))) stop('hypers: "Omega" cannot have missing values')
-      if (!all(is.finite(hypers$Upsilon$Omega))) stop('hypers: "Omega" cannot have infinite values')
-      if (!dim(hypers$Upsilon$Omega)[2] == K) stop('hypers: "Omega" must be square')
-      if (sum( !( (hypers$Upsilon$Omega) == t(hypers$Upsilon$Omega) ) ) > 0) stop('hypers: "Omega" must be symmetric')
-      if ((det(hypers$Upsilon$Omega) - 0) < 0.00001) stop('hypers: "Omega" is close to singular')
+      if (K > 1) {
+        if (hypers$Upsilon$Zeta < K) stop('hypers: "Zeta" must be greater than or equal to K')
+        if (!is.matrix(hypers$Upsilon$Omega)) stop('hypers: "Omega" must be a matrix')
+        if (!dim(hypers$Upsilon$Omega)[1] == K) stop('hypers: "Omega" must be K dimensional')
+        if (!all(!is.na(hypers$Upsilon$Omega))) stop('hypers: "Omega" cannot have missing values')
+        if (!all(is.finite(hypers$Upsilon$Omega))) stop('hypers: "Omega" cannot have infinite values')
+        if (!dim(hypers$Upsilon$Omega)[2] == K) stop('hypers: "Omega" must be square')
+        if (sum( !( (hypers$Upsilon$Omega) == t(hypers$Upsilon$Omega) ) ) > 0) stop('hypers: "Omega" must be symmetric')
+        if ((det(hypers$Upsilon$Omega) - 0) < 0.00001) stop('hypers: "Omega" is close to singular')
+      }
+      if (K == 1) {
+        if (!is.scalar(hypers$Upsilon$Omega)) stop('hypers: "Omega" must be a scalar when K = 1')
+        if (is.na(hypers$Upsilon$Omega)) stop('hypers: "Omega" cannot be NA')
+        if (!is.finite(hypers$Upsilon$Omega)) stop('hypers: "Omega" cannot be infinite')
+      }
     }
 
     ###If Psi hyperparameters are provided
@@ -306,13 +321,21 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
     
     ###If Kappa starting values is provided
     if ("Kappa" %in% names(starting)) {
-      if (!is.matrix(starting$Kappa)) stop('starting: "Kappa" must be a matrix')
-      if (!dim(starting$Kappa)[1] == O) stop('starting: "Kappa" must be O dimensional')
-      if (!dim(starting$Kappa)[2] == O) stop('starting: "Kappa" must be square')
-      if (!all(!is.na(starting$Kappa))) stop('starting: "Kappa" cannot have missing values')
-      if (!all(is.finite(starting$Kappa))) stop('starting: "Kappa" cannot have infinite values')
-      if (sum( !( (starting$Kappa) == t(starting$Kappa) ) ) > 0) stop('starting: "Kappa" must be symmetric')
-      if ((det(starting$Kappa) - 0) < 0.0000000001) stop('starting: "Kappa" is close to singular')
+      if (O > 1) {
+        if (!is.matrix(starting$Kappa)) stop('starting: "Kappa" must be a matrix')
+        if (!dim(starting$Kappa)[1] == O) stop('starting: "Kappa" must be O dimensional')
+        if (!dim(starting$Kappa)[2] == O) stop('starting: "Kappa" must be square')
+        if (!all(!is.na(starting$Kappa))) stop('starting: "Kappa" cannot have missing values')
+        if (!all(is.finite(starting$Kappa))) stop('starting: "Kappa" cannot have infinite values')
+        if (sum( !( (starting$Kappa) == t(starting$Kappa) ) ) > 0) stop('starting: "Kappa" must be symmetric')
+        if ((det(starting$Kappa) - 0) < 0.0000000001) stop('starting: "Kappa" is close to singular')
+      }
+      if (O == 1) {
+        if (!is.scalar(starting$Kappa)) stop('starting: "Kappa" must be a scalar when O = 1')
+        if (is.na(starting$Kappa)) stop('starting: "Kappa" cannot be NA')
+        if (!is.finite(starting$Kappa)) stop('starting: "Kappa" cannot be infinite')
+        if (starting$Kappa <= 0) stop('starting: "Kappa" must be positive')
+      }
     }
 
     ###If Rho starting values is provided
@@ -330,13 +353,21 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
     
     ###If Upsilon starting values is provided
     if ("Upsilon" %in% names(starting)) {
-      if (!is.matrix(starting$Upsilon)) stop('starting: "Upsilon" must be a matrix')
-      if (!dim(starting$Upsilon)[1] == K) stop('starting: "Upsilon" must be K dimensional')
-      if (!dim(starting$Upsilon)[2] == K) stop('starting: "Upsilon" must be square')
-      if (!all(!is.na(starting$Upsilon))) stop('starting: "Upsilon" cannot have missing values')
-      if (!all(is.finite(starting$Upsilon))) stop('starting: "Upsilon" cannot have infinite values')
-      if (sum( !( (starting$Upsilon) == t(starting$Upsilon) ) ) > 0) stop('starting: "Upsilon" must be symmetric')
-      if ((det(starting$Upsilon) - 0) < 0.0000000001) stop('starting: "Upsilon" is close to singular')
+      if (K > 1) {
+        if (!is.matrix(starting$Upsilon)) stop('starting: "Upsilon" must be a matrix')
+        if (!dim(starting$Upsilon)[1] == K) stop('starting: "Upsilon" must be K dimensional')
+        if (!dim(starting$Upsilon)[2] == K) stop('starting: "Upsilon" must be square')
+        if (!all(!is.na(starting$Upsilon))) stop('starting: "Upsilon" cannot have missing values')
+        if (!all(is.finite(starting$Upsilon))) stop('starting: "Upsilon" cannot have infinite values')
+        if (sum( !( (starting$Upsilon) == t(starting$Upsilon) ) ) > 0) stop('starting: "Upsilon" must be symmetric')
+        if ((det(starting$Upsilon) - 0) < 0.0000000001) stop('starting: "Upsilon" is close to singular')
+      }
+      if (K == 1) {
+        if (!is.scalar(starting$Upsilon)) stop('starting: "Upsilon" must be a scalar when K = 1')
+        if (is.na(starting$Upsilon)) stop('starting: "Upsilon" cannot be NA')
+        if (!is.finite(starting$Upsilon)) stop('starting: "Upsilon" cannot be infinite')
+        if (starting$Upsilon <= 0) stop('starting: "Upsilon" must be positive')
+      }
     }
 
     ###If Psi starting values is provided

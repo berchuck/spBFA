@@ -269,7 +269,7 @@ std::pair<para, metrobj> SamplePsi(datobj DatObj, para Para, hypara HyPara, metr
     
     //Compute Phi Proposal
     PsiProposal = (BPsi * exp(BigDeltaProposal) + APsi) / (1 + exp(BigDeltaProposal));
-    
+
     //Fix numerical issue where PsiProposal can equal APsi or BPsi
     // arma::vec PsiProposalVec(1), APsiVec(1), BPsiVec(1);
     // PsiProposalVec(0) = PsiProposal;
@@ -360,8 +360,6 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   
   //Compute SPhiPsi
   arma::mat SPhiPsi = BigPhi * HPsiInv * arma::trans(BigPhi);
-  
-  // Rcpp::Rcout << std::fixed << SPhiPsi << std::endl;
   
   //Sample Upsilon
   double n = Zeta + Nu;
@@ -460,7 +458,8 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   //Declarations
   arma::vec SeqNu = arma::linspace<arma::vec>(0, Nu - 1, Nu);
   arma::uvec IndecesT(1), IndecesMinusT(Nu - 1);
-
+  arma::colvec EtaT(K);
+  
   //Loop over t
   for (arma::uword t = 0; t < Nu; t++) {
     
@@ -479,7 +478,8 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
     arma::mat tLambdaSigmaInv = arma::trans(Lambda) * SigmaTInv;
     arma::mat CovEtaT = CholInv(tLambdaSigmaInv * Lambda + CondPrecEta);
     arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * (YStarWide.col(t) - XBetaMat.col(t)) + CondPrecEta * CondMuEta);
-    arma::colvec EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
+    
+    EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
     if (CF == 1) EtaT = (EtaT - arma::mean(EtaT)); //center on the fly
     BigPhi.col(t) = EtaT;
     
@@ -590,7 +590,6 @@ para SampleDelta(datobj DatObj, para Para, hypara HyPara) {
     
   //End NO shrinkage prior
   }
-  
   
   //Update parameters object
   Para.Delta = Delta;
@@ -1102,8 +1101,6 @@ para SampleXi(datobj DatObj, para Para) {
         double Max = arma::max(logProbsRaw);
         double Delta = Max + log(arma::sum(arma::exp(logProbsRaw - Max)));
         arma::vec ProbsOIJ = arma::exp(logProbsRaw - Delta);
-        
-        // Rcpp::Rcout << std::fixed << ProbsIJ << " " << logProbsRaw << " " << LStarJ << std::endl;
         
         //Sample a new label
         arma::uword XiOIJ;

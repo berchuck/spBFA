@@ -108,7 +108,7 @@ arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat Eta
     if (std::find(VerboseSeq.begin(), VerboseSeq.end(), s) != VerboseSeq.end())
       Rcpp::Rcout << std::fixed << 100 * (s) / NKeep << "%.. ";
 
-    //End loop
+  //End loop
   }
 
   //Output final percentage

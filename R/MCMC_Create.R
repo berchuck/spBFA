@@ -35,7 +35,7 @@ CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, tempor
   
   ###Temporal distance matrix
   TimeDist <- abs(outer(time, time, "-"))
-  
+
   ###Matrix Objects
   EyeNu <- diag(Nu)
   EyeM <- diag(M)
@@ -161,11 +161,13 @@ CreateHyPara <- function(hypers, DatObj) {
   ###Set hyperparameters for Kappa
   if ("Kappa" %in% Userhypers) {
     SmallUpsilon <- hypers$Kappa$SmallUpsilon
-    BigTheta <- hypers$Kappa$BigTheta
+    BigTheta <- matrix(hypers$Kappa$BigTheta, nrow = O, ncol = O)
   }
   if (!("Kappa" %in% Userhypers)) {
-    SmallUpsilon <- O + 1
-    BigTheta <- diag(O)
+    if (O > 1) SmallUpsilon <- O + 1
+    if (O == 1) SmallUpsilon <- 0.001
+    if (O > 1) BigTheta <- diag(O)
+    if (O == 1) BigTheta <- 0.001 * diag(O)
   }
 
   ###Set hyperparameters for Rho
@@ -250,11 +252,13 @@ CreateHyPara <- function(hypers, DatObj) {
   ###Set hyperparameters for Upsilon
   if ("Upsilon" %in% Userhypers) {
     Zeta <- hypers$Upsilon$Zeta
-    Omega <- hypers$Upsilon$Omega
+    Omega <- matrix(hypers$Upsilon$Omega, nrow = K, ncol = K)
   }
   if (!("Upsilon" %in% Userhypers)) {
-    Zeta <- K + 1
-    Omega <- diag(K)
+    if (K > 1) Zeta <- K + 1
+    if (K == 1) Zeta <- 0.001
+    if (K > 1) Omega <- diag(K)
+    if (K == 1) Omega <- 0.001 * diag(K)
   }
 
   ###Create object for hyperparameters
@@ -362,7 +366,7 @@ CreatePara <- function(starting, DatObj, HyPara) {
   } else {Sigma2 <- matrix(1, nrow = 1, ncol = 1)}
   
   ###Set initial values of Kappa
-  if ("Kappa" %in% UserStarters) Kappa <- starting$Kappa
+  if ("Kappa" %in% UserStarters) Kappa <- matrix(starting$Kappa, nrow = O, ncol = O)
   if ((!"Kappa" %in% UserStarters)) Kappa <- diag(O)
   
   ###Set initial values of Rho

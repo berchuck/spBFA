@@ -99,7 +99,7 @@ predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, type 
   
   ###Create Trials object
   if (DatObj$C == 0) {
-    DatObj$Trials <- array(0, dim = c(M, O, Nu))
+    DatObj$Trials <- array(0, dim = c(M, O, NNewVisits))
   }
   if ((DatObj$C > 0) & is.null(NewTrials)) {
     Trials <- array(dim = c(M, DatObj$C, NNewVisits))

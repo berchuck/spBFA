@@ -57,6 +57,7 @@ arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) 
     Lambda = arma::reshape(LambdaMat.row(s), K, M * O).t();
     Beta = BetaMat.row(s).t();
     Mean = arma::kron(EyeNu, Lambda) * Eta + X * Beta;
+    arma::cube MeanOut(N, 1, 1);
     MeanOut(arma::span::all, arma::span(0, 0), arma::span(0, 0)) = Mean;
     MeanOut = arma::reshape(MeanOut, M, O, Nu);
     LogLiks = 0; count = 0;

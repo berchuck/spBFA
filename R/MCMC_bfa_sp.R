@@ -121,7 +121,7 @@
 #' @param clustering A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
 #'  each column is instead modeled with an independent spatial process.
 #'
-#' @param center.factors A logical indicating whether the factors should be centered at each time point. Default is TRUE.
+#' @param center.factors A logical indicating whether the factors should be centered at each time point. Default is FALSE
 #'  
 #' @details Details of the underlying statistical model proposed by
 #'  Berchuck et al. 2019. are forthcoming.
@@ -180,28 +180,28 @@
 bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
                    family = "normal", temporal.structure = "exponential", spatial.structure = "discrete",
                    starting = NULL, hypers = NULL, tuning = NULL, mcmc = NULL, seed = 54,
-                   gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE, center.factors = TRUE) {
+                   gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE, center.factors = FALSE) {
   
   ###Function Inputs
-  # formula = malaria ~ rain + temp + season
-  # data = analdata
-  # dist = W
-  # time = Time
-  # trials = "population"
-  # starting = Starting
-  # hypers = Hypers
-  # tuning = Tuning
-  # mcmc = MCMC
-  # family = "binomial"
-  # temporal.structure = "exponential"
-  # spatial.structure = "discrete"
-  # seed = 54
-  # K = K
-  # L = Inf
-  # gamma.shrinkage = FALSE
-  # include.space = FALSE
-  # clustering = FALSE
-  # center.factors = TRUE
+  formula = sens ~ age
+  data = dat
+  dist = W
+  time = Time
+  trials = NULL
+  starting = Starting
+  hypers = Hypers
+  tuning = Tuning
+  mcmc = MCMC
+  family = "tobit"
+  temporal.structure = "exponential"
+  spatial.structure = "discrete"
+  seed = 54
+  K = K
+  L = Inf
+  gamma.shrinkage = TRUE
+  include.space = TRUE
+  clustering = TRUE
+  center.factors = FALSE
   
   ###Check for missing objects
   if (missing(formula)) stop("formula: missing")

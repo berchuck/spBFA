@@ -39,7 +39,7 @@ arma::mat SamplePPD(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) {
 
   //Initialize objects
   arma::colvec Mean(N), MeanVec(M * Nu), YStar(M * Nu), YMax(M * Nu, arma::fill::zeros), Eta(K * Nu), Beta(P);
-  arma::cube MeanOut(M, O, Nu), YStarCube(M, O, Nu);
+  arma::cube YStarCube(M, O, Nu);
   arma::mat Lambda(M * O, Nu), MeanMat(M, Nu), TrialsMat(M, Nu), PiMat(M, Nu), YStarMat(M, Nu), PPD(N, NKeep);
   int count;
   arma::umat ProbitOnes;
@@ -52,6 +52,7 @@ arma::mat SamplePPD(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) {
     Lambda = arma::reshape(LambdaMat.row(s), K, M * O).t();
     Beta = BetaMat.row(s).t();
     Mean = arma::kron(EyeNu, Lambda) * Eta + X * Beta;
+    arma::cube MeanOut(N, 1, 1);
     MeanOut(arma::span::all, arma::span(0, 0), arma::span(0, 0)) = Mean;
     MeanOut = arma::reshape(MeanOut, M, O, Nu);
     count = 0;

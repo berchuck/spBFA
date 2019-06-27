@@ -8,7 +8,7 @@ bfa_sp(formula, data, dist, time, K, L = Inf, trials = NULL,
   family = "normal", temporal.structure = "exponential",
   spatial.structure = "discrete", starting = NULL, hypers = NULL,
   tuning = NULL, mcmc = NULL, seed = 54, gamma.shrinkage = TRUE,
-  include.space = TRUE, clustering = TRUE, center.factors = TRUE)
+  include.space = TRUE, clustering = TRUE, center.factors = FALSE)
 }
 \arguments{
 \item{formula}{A \code{formula} object, corresponding to the spatial factor analysis model. The response must be on the left of a \code{~} operator, and the terms on the right 
@@ -129,7 +129,7 @@ is fixed as an identity matrix. This specification overrides the \code{spatial.s
 \item{clustering}{A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
 each column is instead modeled with an independent spatial process.}
 
-\item{center.factors}{A logical indicating whether the factors should be centered at each time point. Default is TRUE.}
+\item{center.factors}{A logical indicating whether the factors should be centered at each time point. Default is FALSE}
 }
 \value{
 \code{bfa_sp} returns a list containing the following objects
