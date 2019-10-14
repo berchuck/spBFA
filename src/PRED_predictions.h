@@ -37,8 +37,8 @@ arma::mat H(double Psi, int TempCorInd, arma::mat const& TimeDist, int Nu);
 arma::mat SpEXP(double Rho, arma::mat const& SpDist, int M);
 
 //PREDICTION FUNCTIONS
-arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
-arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat EtaKrig, int NKeep);
+arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose);
+arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat EtaKrig, int NKeep, bool Verbose);
   
 //DISTRIBUTION FUNCTIONS
 arma::mat rmvnormRcpp(int n, arma::vec const& mean, arma::mat const& sigma);

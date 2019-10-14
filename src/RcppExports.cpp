@@ -46,15 +46,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // GetLogLik
-arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
-RcppExport SEXP _spBFA_GetLogLik(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP) {
+arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose);
+RcppExport SEXP _spBFA_GetLogLik(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP, SEXP VerboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
     Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetLogLik(DatObj_List, Para_List, NKeep));
+    Rcpp::traits::input_parameter< bool >::type Verbose(VerboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetLogLik(DatObj_List, Para_List, NKeep, Verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -71,15 +72,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // SamplePPD
-arma::mat SamplePPD(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
-RcppExport SEXP _spBFA_SamplePPD(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP) {
+arma::mat SamplePPD(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose);
+RcppExport SEXP _spBFA_SamplePPD(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP, SEXP VerboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
     Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
-    rcpp_result_gen = Rcpp::wrap(SamplePPD(DatObj_List, Para_List, NKeep));
+    Rcpp::traits::input_parameter< bool >::type Verbose(VerboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(SamplePPD(DatObj_List, Para_List, NKeep, Verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -102,21 +104,22 @@ BEGIN_RCPP
 END_RCPP
 }
 // EtaKrigging
-arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
-RcppExport SEXP _spBFA_EtaKrigging(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP) {
+arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose);
+RcppExport SEXP _spBFA_EtaKrigging(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP NKeepSEXP, SEXP VerboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type DatObj_List(DatObj_ListSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
     Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
-    rcpp_result_gen = Rcpp::wrap(EtaKrigging(DatObj_List, Para_List, NKeep));
+    Rcpp::traits::input_parameter< bool >::type Verbose(VerboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(EtaKrigging(DatObj_List, Para_List, NKeep, Verbose));
     return rcpp_result_gen;
 END_RCPP
 }
 // YKrigging
-arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat EtaKrig, int NKeep);
-RcppExport SEXP _spBFA_YKrigging(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP EtaKrigSEXP, SEXP NKeepSEXP) {
+arma::cube YKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, arma::mat EtaKrig, int NKeep, bool Verbose);
+RcppExport SEXP _spBFA_YKrigging(SEXP DatObj_ListSEXP, SEXP Para_ListSEXP, SEXP EtaKrigSEXP, SEXP NKeepSEXP, SEXP VerboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -124,7 +127,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type Para_List(Para_ListSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type EtaKrig(EtaKrigSEXP);
     Rcpp::traits::input_parameter< int >::type NKeep(NKeepSEXP);
-    rcpp_result_gen = Rcpp::wrap(YKrigging(DatObj_List, Para_List, EtaKrig, NKeep));
+    Rcpp::traits::input_parameter< bool >::type Verbose(VerboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(YKrigging(DatObj_List, Para_List, EtaKrig, NKeep, Verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -235,12 +239,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spBFA_GetRooti", (DL_FUNC) &_spBFA_GetRooti, 2},
     {"_spBFA_H", (DL_FUNC) &_spBFA_H, 4},
     {"_spBFA_SpEXP", (DL_FUNC) &_spBFA_SpEXP, 3},
-    {"_spBFA_GetLogLik", (DL_FUNC) &_spBFA_GetLogLik, 3},
+    {"_spBFA_GetLogLik", (DL_FUNC) &_spBFA_GetLogLik, 4},
     {"_spBFA_GetLogLikMean", (DL_FUNC) &_spBFA_GetLogLikMean, 2},
-    {"_spBFA_SamplePPD", (DL_FUNC) &_spBFA_SamplePPD, 3},
+    {"_spBFA_SamplePPD", (DL_FUNC) &_spBFA_SamplePPD, 4},
     {"_spBFA_bfa_sp_Rcpp", (DL_FUNC) &_spBFA_bfa_sp_Rcpp, 8},
-    {"_spBFA_EtaKrigging", (DL_FUNC) &_spBFA_EtaKrigging, 3},
-    {"_spBFA_YKrigging", (DL_FUNC) &_spBFA_YKrigging, 4},
+    {"_spBFA_EtaKrigging", (DL_FUNC) &_spBFA_EtaKrigging, 4},
+    {"_spBFA_YKrigging", (DL_FUNC) &_spBFA_YKrigging, 5},
     {"_spBFA_Play", (DL_FUNC) &_spBFA_Play, 0},
     {"_spBFA_GetLStarJ", (DL_FUNC) &_spBFA_GetLStarJ, 5},
     {"_spBFA_GetLambda", (DL_FUNC) &_spBFA_GetLambda, 5},

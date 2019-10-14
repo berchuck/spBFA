@@ -6,7 +6,7 @@
 //not for use by users.
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) {
+arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose) {
 
   //Convet Rcpp::Lists to C++ structs
   datobjPRED DatObj = ConvertDatObjPRED(DatObj_List);
@@ -29,10 +29,12 @@ arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) {
   
   //Verbose output
   arma::vec VerboseSeq;
-  VerboseSeq << 0.25 << 0.50 << 0.75;
-  VerboseSeq *= NKeep;
-  Rcpp::Rcout << std::fixed << "Krigging Eta: 0%.. ";
-
+  if (Verbose) {
+    VerboseSeq << 0.25 << 0.50 << 0.75;
+    VerboseSeq *= NKeep;
+    Rcpp::Rcout << std::fixed << "Krigging Eta: 0%.. ";
+  }
+  
   //Initialize objects
   arma::mat Upsilon(K, K), Sigma(K * NNewVisits, K * NNewVisits);
   arma::rowvec UpsilonRow(K);
@@ -75,15 +77,17 @@ arma::mat EtaKrigging(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) {
     KrigOut.col(s) = rmvnormRcpp(1, Mean, Sigma);
 
     //Add a new percentage
-    Rcpp::Rcout.precision(0);
-    if (std::find(VerboseSeq.begin(), VerboseSeq.end(), s) != VerboseSeq.end())
-      Rcpp::Rcout << std::fixed << 100 * (s) / NKeep << "%.. ";
-
+    if (Verbose) {
+      Rcpp::Rcout.precision(0);
+      if (std::find(VerboseSeq.begin(), VerboseSeq.end(), s) != VerboseSeq.end())
+        Rcpp::Rcout << std::fixed << 100 * (s) / NKeep << "%.. ";
+    }
+    
   //End loop
   }
 
   //Output final percentage
-  Rcpp::Rcout << std::fixed << "100%.. Done!" << std::endl;
+  if (Verbose) Rcpp::Rcout << std::fixed << "100%.. Done!" << std::endl;
 
   //Return PPD
   return KrigOut;

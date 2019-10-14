@@ -5,7 +5,7 @@
 \title{diagnostics}
 \usage{
 diagnostics(object, diags = c("dic", "dinf", "waic"),
-  keepDeviance = FALSE, keepPPD = FALSE)
+  keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE)
 }
 \arguments{
 \item{object}{A \code{\link{spBFA}} model objectect for which diagnostics
@@ -22,6 +22,8 @@ is returned (default = FALSE).}
 
 \item{keepPPD}{A logical indicating whether the posterior predictive distribution
 at each observed location is returned (default = FALSE).}
+
+\item{Verbose}{A boolean logical indicating whether progress should be output (default = TRUE).}
 }
 \value{
 \code{diagnostics} returns a list containing the diagnostics requested and

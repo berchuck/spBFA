@@ -29,7 +29,7 @@ struct paraDIAG {
 };
 
 //DIAGNOSTIC FUNCTIONS
-arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep);
+arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose);
 double GetLogLikMean(Rcpp::List DatObj_List, Rcpp::List Para_List);
 
 //DISTRIBUTION FUNCTIONS

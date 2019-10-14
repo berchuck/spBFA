@@ -39,17 +39,17 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
   //Begin MCMC Sampler
   for (int s = 1; s < NTotal + 1; s++) {
 
-    Rcpp::Rcout << std::fixed << s << std::endl;
+    // Rcpp::Rcout << std::fixed << s << std::endl;
     
     //Check for user interrupt every 50 iterations
     if (s % 50 == 0) Rcpp::checkUserInterrupt();
     
-    Rcpp::Rcout << std::fixed << "Sampling U:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling U:" << std::endl;
     
     //Gibbs step for Latent U
     if (LInf == 1) Para = SampleU(DatObj, Para);
     
-    Rcpp::Rcout << std::fixed << "Sampling Y:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Y:" << std::endl;
     
     // Data Augmentation Step
     if (any(FamilyInd != 0)) {
@@ -58,32 +58,32 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
       Para = DAUpdate.second;
     }
     
-    Rcpp::Rcout << std::fixed << "Sampling Theta:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Theta:" << std::endl;
     
     //Gibbs step for Theta
     if (BNP == 1) Para = SampleTheta(DatObj, Para);
 
-    Rcpp::Rcout << std::fixed << "Sampling Xi:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Xi:" << std::endl;
     
     //Gibbs step for Xi
     if (BNP == 1) Para = SampleXi(DatObj, Para);
     
-    Rcpp::Rcout << std::fixed << "Sampling Z:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Z:" << std::endl;
     
     //Gibbs step for Z
     if (BNP == 1) Para = SampleZ(DatObj, Para);
 
-    Rcpp::Rcout << std::fixed << "Sampling Alpha:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Alpha:" << std::endl;
     
     //Gibbs step for Alpha
     Para = SampleAlpha(DatObj, Para);
     
-    Rcpp::Rcout << std::fixed << "Sampling Kappa:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Kappa:" << std::endl;
     
     //Gibbs step for Kappa
     Para = SampleKappa(DatObj, Para, HyPara);
     
-    Rcpp::Rcout << std::fixed << "Sampling Rho:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Rho:" << std::endl;
     
     //Metropolis step for Rho
     if (SpCorInd == 0 & DatObj.IS == 1) {
@@ -92,36 +92,36 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
       MetrObj = Update.second;
     }
   
-    Rcpp::Rcout << std::fixed << "Sampling Delta:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Delta:" << std::endl;
     
     //Gibbs step for Delta
     if (BNP == 1) Para = SampleDelta(DatObj, Para, HyPara);
     
-    Rcpp::Rcout << std::fixed << "Sampling Eta:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Eta:" << std::endl;
     
     //Gibbs step for Eta
     Para = SampleEta(DatObj, Para, HyPara);
     
-    Rcpp::Rcout << std::fixed << "Sampling Upsilon:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Upsilon:" << std::endl;
     
     //Gibbs step for Upsilon
     Para = SampleUpsilon(DatObj, Para, HyPara);
     
-    Rcpp::Rcout << std::fixed << "Sampling Psi:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Psi:" << std::endl;
     
     // Metropolis step for Psi
     Update = SamplePsi(DatObj, Para, HyPara, MetrObj);
     Para = Update.first;
     MetrObj = Update.second;
     
-    Rcpp::Rcout << std::fixed << "Sampling Sigma2:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Sigma2:" << std::endl;
     
     //Gibbs step for Sigma2
     if (any(FamilyInd != 3)) {
       Para = SampleSigma2(DatObj, Para, HyPara);
     }
     
-    Rcpp::Rcout << std::fixed << "Sampling Beta:" << std::endl;
+    // Rcpp::Rcout << std::fixed << "Sampling Beta:" << std::endl;
     
     //Gibbs step for Beta
     if (DatObj.P > 0) {

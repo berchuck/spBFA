@@ -18,33 +18,32 @@
 #'  and contain only non-negative integers. The default sets \code{NewTrials} to \code{NULL}, which assumes the trials for all predictions
 #'  are the same as the final time point.
 #'  
-#' @param type A character string indicating the type of prediction, choices include "temporal" and "spatial".
+#' @param type A character string indicating the type of prediction, choices include "temporal" and "spatial". Spatial prediction has not been implemented yet.
+#'
+#' @param Verbose A boolean logical indicating whether progress should be output.
 #'
 #' @param ... other arguments.
 #'
 #' @details \code{predict.spBFA} uses Bayesian krigging to predict vectors at future
-#'  time points. The function returns the krigged observed outcomes along with the
-#'  observational level parameters (\code{mu}, \code{tau}, and \code{alpha}).
+#'  time points. The function returns the krigged factors (\code{Eta}) and alos the observed outcomes (\code{Y}).
 #'
 #' @return \code{predict.spBFA} returns a list containing the following objects.
 #'
 #'   \describe{
 #'
-#'   \item{\code{MuTauAlpha}}{A \code{list} containing three matrices, \code{mu},
-#'   \code{tau} and \code{alpha}. Each matrix is dimension \code{NKeep x s}, where
-#'   \code{s} is the number of new time points. Each matrix contains posterior
-#'   samples obtained by Bayesian krigging.}
+#'   \item{\code{Eta}}{A \code{list} containing \code{NNewVistis} matrices, one for each new time prediction. Each matrix is dimension \code{NKeep x K}, where
+#'   \code{K} is the number of latent factors Each matrix contains posterior samples obtained by Bayesian krigging.}
 #'
-#'   \item{\code{Y}}{A \code{list} containing \code{s} posterior predictive distribution
-#'   matrices. Each matrix is dimension \code{NKeep x s}, where \code{s}
-#'   is the number of new time points. Each matrix is obtained through Bayesian krigging.}
+#'   \item{\code{Y}}{A \code{list} containing \code{NNewVistis} posterior predictive distribution
+#'   matrices. Each matrix is dimension \code{NKeep x (M * O)}, where \code{M} is the number of spatial locations and \code{O} the number of observation types.
+#'   Each matrix is obtained through Bayesian krigging.}
 #'
 #'   }
 #'
 #' @author Samuel I. Berchuck
 #' @export
 ###Prediction function for spBFA function
-predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, type = "temporal", ...) {
+predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, Verbose = TRUE, type = "temporal", ...) {
 
   ###Check Inputs
   if (missing(object)) stop('"object" is missing')
@@ -56,7 +55,8 @@ predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, type 
   if (!all(NewTimes >= 0)) stop('NewTimes vector has at least one negative entry')
   if (!is.character(type)) stop('"type" must be a character string')
   if (!(type %in% c("temporal", "spatial"))) stop('"type" must be one of "spatial" or "temporal"')
-
+  if (!is.logical(Verbose)) stop('"Verbose" must be a logical')
+  
   ###Set seed for reproducibility
   set.seed(54)
 
@@ -66,6 +66,7 @@ predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, type 
   M <- DatObj$M
   O <- DatObj$O
   P <- DatObj$P
+  K <- DatObj$K
 
   ###Create updated distance matrix
   TimeFixed <- DatObj$Time
@@ -132,10 +133,10 @@ predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, type 
   if (!is.null(object$sigma2)) Para$Sigma2 <- object$sigma2
   
   ###Obtain samples of eta using Bayesian krigging
-  EtaKrig <- EtaKrigging(DatObj, Para, NKeep)
+  EtaKrig <- EtaKrigging(DatObj, Para, NKeep, Verbose)
 
   ###Obtain samples of observed Y
-  YKrig <- YKrigging(DatObj, Para, EtaKrig, NKeep)
+  YKrig <- YKrigging(DatObj, Para, EtaKrig, NKeep, Verbose)
 
   ###Format theta samples for output
   EtaOut <- list()

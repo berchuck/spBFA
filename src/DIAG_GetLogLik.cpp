@@ -7,7 +7,7 @@
 //not for use by users.
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) {
+arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose) {
 
   //Convert Rcpp::Lists to C++ structs
   datobjDIAG DatObj = ConvertDatObjDIAG(DatObj_List);
@@ -45,10 +45,12 @@ arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) 
   
   //Verbose output
   arma::vec VerboseSeq;
-  VerboseSeq << 0.25 << 0.50 << 0.75;
-  VerboseSeq *= NKeep;
-  Rcpp::Rcout << std::fixed << "Calculating Log-Lik: 0%.. ";
-  
+  if (Verbose) {
+    VerboseSeq << 0.25 << 0.50 << 0.75;
+    VerboseSeq *= NKeep;
+    Rcpp::Rcout << std::fixed << "Calculating Log-Lik: 0%.. ";
+  }
+    
   //Loop over scans
   for (int s = 0; s < NKeep; s++) {
     
@@ -136,15 +138,17 @@ arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep) 
     LogLik(s) = LogLiks;
 
     //Add a new percentage
-    Rcpp::Rcout.precision(0);
-    if (std::find(VerboseSeq.begin(), VerboseSeq.end(), s) != VerboseSeq.end())
-      Rcpp::Rcout << std::fixed << 100 * (s) / NKeep << "%.. ";
+    if (Verbose) {
+      Rcpp::Rcout.precision(0);
+      if (std::find(VerboseSeq.begin(), VerboseSeq.end(), s) != VerboseSeq.end())
+        Rcpp::Rcout << std::fixed << 100 * (s) / NKeep << "%.. ";
+    }
     
   //End loop over scans
   }
   
   //Output final percentage
-  Rcpp::Rcout << std::fixed << "100%.. Done!" << std::endl;
+  if (Verbose) Rcpp::Rcout << std::fixed << "100%.. Done!" << std::endl;
   
   //Return log-likelihood
   return LogLik;

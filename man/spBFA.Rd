@@ -6,7 +6,7 @@
 \alias{spBFA-package}
 \title{spBFA}
 \description{
-\code{spBFA} is a package for Bayesian spatial factor analysis.
+\code{spBFA} is a package for Bayesian spatial factor analysis. A corresponding manuscript is forthcoming.
 }
 \author{
 Samuel I. Berchuck \email{sib2@duke.edu}

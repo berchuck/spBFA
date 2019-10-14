@@ -13,28 +13,28 @@ SpEXP <- function(Rho, SpDist, M) {
     .Call('_spBFA_SpEXP', PACKAGE = 'spBFA', Rho, SpDist, M)
 }
 
-GetLogLik <- function(DatObj_List, Para_List, NKeep) {
-    .Call('_spBFA_GetLogLik', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep)
+GetLogLik <- function(DatObj_List, Para_List, NKeep, Verbose) {
+    .Call('_spBFA_GetLogLik', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep, Verbose)
 }
 
 GetLogLikMean <- function(DatObj_List, Para_List) {
     .Call('_spBFA_GetLogLikMean', PACKAGE = 'spBFA', DatObj_List, Para_List)
 }
 
-SamplePPD <- function(DatObj_List, Para_List, NKeep) {
-    .Call('_spBFA_SamplePPD', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep)
+SamplePPD <- function(DatObj_List, Para_List, NKeep, Verbose) {
+    .Call('_spBFA_SamplePPD', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep, Verbose)
 }
 
 bfa_sp_Rcpp <- function(DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive) {
     .Call('_spBFA_bfa_sp_Rcpp', PACKAGE = 'spBFA', DatObj_List, HyPara_List, MetrObj_List, Para_List, DatAug_List, McmcObj_List, RawSamples, Interactive)
 }
 
-EtaKrigging <- function(DatObj_List, Para_List, NKeep) {
-    .Call('_spBFA_EtaKrigging', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep)
+EtaKrigging <- function(DatObj_List, Para_List, NKeep, Verbose) {
+    .Call('_spBFA_EtaKrigging', PACKAGE = 'spBFA', DatObj_List, Para_List, NKeep, Verbose)
 }
 
-YKrigging <- function(DatObj_List, Para_List, EtaKrig, NKeep) {
-    .Call('_spBFA_YKrigging', PACKAGE = 'spBFA', DatObj_List, Para_List, EtaKrig, NKeep)
+YKrigging <- function(DatObj_List, Para_List, EtaKrig, NKeep, Verbose) {
+    .Call('_spBFA_YKrigging', PACKAGE = 'spBFA', DatObj_List, Para_List, EtaKrig, NKeep, Verbose)
 }
 
 Play <- function() {

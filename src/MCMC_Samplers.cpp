@@ -444,7 +444,6 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   int Nu = DatObj.Nu;
   int M = DatObj.M;
   int O = DatObj.O;
-  int CF = DatObj.CF;
 
   //Set parameters
   arma::mat BigPhi = Para.BigPhi;
@@ -480,7 +479,6 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
     arma::colvec MeanEtaT = CovEtaT * (tLambdaSigmaInv * (YStarWide.col(t) - XBetaMat.col(t)) + CondPrecEta * CondMuEta);
     
     EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
-    if (CF == 1) EtaT = (EtaT - arma::mean(EtaT)); //center on the fly
     BigPhi.col(t) = EtaT;
     
   //End loop over visits

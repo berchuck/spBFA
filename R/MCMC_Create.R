@@ -1,5 +1,5 @@
 ###Function for reading in sampler inputs and creating a list object that contains all relavent data objects--------------------
-CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering, center.factors) {
+CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering) {
 
   ###Data objects
   N <- dim(data)[1] # total observations
@@ -126,7 +126,6 @@ CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, tempor
   DatObj$GS <- 1 * gamma.shrinkage
   DatObj$IS <- 1 * include.space
   DatObj$CL <- 1 * clustering
-  DatObj$CF <- 1 * center.factors
   return(DatObj)
 
 }

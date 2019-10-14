@@ -1,6 +1,6 @@
 #' Spatial factor analysis using a Bayesian hierarchical model.
 #'
-#' \code{bfa_sp} is a Markov chain Monte Carlo (MCMC) sampler for a spatial factor analysis model. The spatial component is 
+#' \code{bfa_sp} is a Markov chain Monte Carlo (MCMC) sampler for a Bayesian spatial factor analysis model. The spatial component is 
 #' introduced using a Probit stick-breaking process prior on the factor loadings. The model is implemented using a Bayesian hierarchical framework.
 #'
 #' @param formula A \code{formula} object, corresponding to the spatial factor analysis model. The response must be on the left of a \code{~} operator, and the terms on the right 
@@ -120,8 +120,6 @@
 #'  
 #' @param clustering A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
 #'  each column is instead modeled with an independent spatial process.
-#'
-#' @param center.factors A logical indicating whether the factors should be centered at each time point. Default is FALSE
 #'  
 #' @details Details of the underlying statistical model proposed by
 #'  Berchuck et al. 2019. are forthcoming.
@@ -180,7 +178,7 @@
 bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
                    family = "normal", temporal.structure = "exponential", spatial.structure = "discrete",
                    starting = NULL, hypers = NULL, tuning = NULL, mcmc = NULL, seed = 54,
-                   gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE, center.factors = FALSE) {
+                   gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE) {
   
   ###Function Inputs
   # formula = sens ~ age
@@ -201,8 +199,7 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
   # gamma.shrinkage = TRUE
   # include.space = TRUE
   # clustering = TRUE
-  # center.factors = FALSE
-  
+
   ###Check for missing objects
   if (missing(formula)) stop("formula: missing")
   if (missing(data)) stop("data: missing")
@@ -211,7 +208,7 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
   if (missing(K)) stop("K: missing")
 
   ###Check model inputs
-  CheckInputs(formula, data, dist, time, K, L, trials, starting, hypers, tuning, mcmc, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering, center.factors)
+  CheckInputs(formula, data, dist, time, K, L, trials, starting, hypers, tuning, mcmc, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering)
 
   ####Set seed for reproducibility
   set.seed(seed)
@@ -220,7 +217,7 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
   Interactive <- interactive()
 
   ###Create objects for use in sampler
-  DatObj <- CreateDatObj(formula, data, dist, time, trials, K, L, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering, center.factors)
+  DatObj <- CreateDatObj(formula, data, dist, time, trials, K, L, family, temporal.structure, spatial.structure, gamma.shrinkage, include.space, clustering)
   HyPara <- CreateHyPara(hypers, DatObj) 
   MetrObj <- CreateMetrObj(tuning, DatObj)
   Para <- CreatePara(starting, DatObj, HyPara)

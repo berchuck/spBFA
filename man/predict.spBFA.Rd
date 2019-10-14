@@ -5,7 +5,7 @@
 \title{predict.spBFA}
 \usage{
 \method{predict}{spBFA}(object, NewTimes, NewX = NULL,
-  NewTrials = NULL, type = "temporal", ...)
+  NewTrials = NULL, Verbose = TRUE, type = "temporal", ...)
 }
 \arguments{
 \item{object}{A \code{\link{spBFA}} model object for which predictions
@@ -22,7 +22,9 @@ are the same as the final time point.}
 and contain only non-negative integers. The default sets \code{NewTrials} to \code{NULL}, which assumes the trials for all predictions
 are the same as the final time point.}
 
-\item{type}{A character string indicating the type of prediction, choices include "temporal" and "spatial".}
+\item{Verbose}{A boolean logical indicating whether progress should be output.}
+
+\item{type}{A character string indicating the type of prediction, choices include "temporal" and "spatial". Spatial prediction has not been implemented yet.}
 
 \item{...}{other arguments.}
 }
@@ -31,14 +33,12 @@ are the same as the final time point.}
 
   \describe{
 
-  \item{\code{MuTauAlpha}}{A \code{list} containing three matrices, \code{mu},
-  \code{tau} and \code{alpha}. Each matrix is dimension \code{NKeep x s}, where
-  \code{s} is the number of new time points. Each matrix contains posterior
-  samples obtained by Bayesian krigging.}
+  \item{\code{Eta}}{A \code{list} containing \code{NNewVistis} matrices, one for each new time prediction. Each matrix is dimension \code{NKeep x K}, where
+  \code{K} is the number of latent factors Each matrix contains posterior samples obtained by Bayesian krigging.}
 
-  \item{\code{Y}}{A \code{list} containing \code{s} posterior predictive distribution
-  matrices. Each matrix is dimension \code{NKeep x s}, where \code{s}
-  is the number of new time points. Each matrix is obtained through Bayesian krigging.}
+  \item{\code{Y}}{A \code{list} containing \code{NNewVistis} posterior predictive distribution
+  matrices. Each matrix is dimension \code{NKeep x (M * O)}, where \code{M} is the number of spatial locations and \code{O} the number of observation types.
+  Each matrix is obtained through Bayesian krigging.}
 
   }
 }
@@ -47,8 +47,7 @@ Predicts future observations from the \code{\link{spBFA}} model.
 }
 \details{
 \code{predict.spBFA} uses Bayesian krigging to predict vectors at future
- time points. The function returns the krigged observed outcomes along with the
- observational level parameters (\code{mu}, \code{tau}, and \code{alpha}).
+ time points. The function returns the krigged factors (\code{Eta}) and alos the observed outcomes (\code{Y}).
 }
 \author{
 Samuel I. Berchuck

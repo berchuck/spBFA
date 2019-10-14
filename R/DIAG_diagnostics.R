@@ -18,6 +18,8 @@
 #'
 #' @param keepPPD A logical indicating whether the posterior predictive distribution
 #'  at each observed location is returned (default = FALSE).
+#'  
+#' @param Verbose A boolean logical indicating whether progress should be output (default = TRUE).
 #'
 #' @details To assess model fit, DIC, d-infinity and WAIC are used. DIC is based on the
 #'  deviance statistic and penalizes for the complexity of a model with an effective
@@ -43,7 +45,7 @@
 #' @references Watanabe, S. (2010). Asymptotic equivalence of Bayes cross validation and widely applicable information criterion in singular learning theory. Journal of Machine Learning Research, 11(Dec), 3571-3594.
 #'
 #' @export
-diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance = FALSE, keepPPD = FALSE) {
+diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE) {
 
   ###Check Inputs
   if (missing(object)) stop('"object" is missing')
@@ -51,7 +53,8 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
   if (sum((!diags %in% c("dic", "dinf", "waic"))) > 0) stop('"diags" must contain at least one of "dic", "dinf" or "waic"')
   if (!is.logical(keepDeviance)) stop('"keepDeviance" must be a logical')
   if (!is.logical(keepPPD)) stop('"keepPPD" must be a logical')
-
+  if (!is.logical(Verbose)) stop('"Verbose" must be a logical')
+  
   ###Unload spBFA objects
   DatObj <- object$datobj
   DatAug <- object$dataug
@@ -103,7 +106,7 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
 
   ###Compute Log-likelihood using Rcpp function GetLogLik
   LogLik <- NULL
-  if (("dic" %in% diags) | ("waic" %in% diags)) LogLik <- GetLogLik(DatObj, Para, NKeep)
+  if (("dic" %in% diags) | ("waic" %in% diags)) LogLik <- GetLogLik(DatObj, Para, NKeep, Verbose)
 
   ###Compute DIC diagnostics
   dic <- NULL
@@ -126,7 +129,7 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
   if ("dinf" %in% diags) {
 
     ###Get PPD
-    PPD <- SamplePPD(DatObj, Para, NKeep)
+    PPD <- SamplePPD(DatObj, Para, NKeep, Verbose)
 
     ###Compute PPD Diagnostics
     PPDMean <- apply(PPD, 1, mean)
@@ -146,6 +149,10 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
     # The calculation of Waic!  Returns lppd, p_waic_1, p_waic_2, and waic, which we define
     # as 2*(lppd - p_waic_2), as recommmended in BDA
     lppd <- log( apply(exp(LogLik), 2, mean) )
+    if (!is.finite(lppd)) {
+      M <- max(LogLik)
+      lppd <- -log(dim(LogLik)[1]) + (M - log(sum(exp(LogLik - M))))
+    }
     p_waic_1 <- 2 * (lppd - apply(LogLik, 2, mean) )
     p_waic_2 <- apply(LogLik, 2, var)
     waic <- -2 * lppd + 2 * p_waic_2
