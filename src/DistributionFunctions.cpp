@@ -1,7 +1,6 @@
 #define ARMA_DONT_PRINT_ERRORS //So the cholesky warning is suppressed
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
-#include <cmath>
 
 //Sample from a categorical distribution---------------------------------------------------
 // Rcpp::NumericVector sampleRcpp(Rcpp::NumericVector const& x, int size, bool replace, Rcpp::NumericVector const& prob = Rcpp::NumericVector::create()) {
@@ -19,15 +18,17 @@ arma::vec sampleRcpp(arma::Col<int> const& x, int size, bool replace, arma::vec 
 
 //Log density of a multivariate normal-----------------------------------------------------
 double lndMvn(arma::vec const& Y, arma::vec const& Mu, arma::mat const& Rooti){
-  arma::vec Z = arma::vectorise( arma::trans(Rooti) * (Y - Mu) );
-  return ( -( Y.size() / 2.0 ) * log( 2 * M_PI ) - 0.5*(arma::trans(Z) * Z) + sum( log( arma::diagvec(Rooti) ) ) )[0];
+  arma::vec Z = arma::vectorise(arma::trans(Rooti) * (Y - Mu));
+  arma::vec Pi2(1); Pi2(0) = 2.0 * M_PI;
+  return (-(Y.size() / 2.0) * arma::log(Pi2) - 0.5 * (arma::trans(Z) * Z) + arma::sum(arma::log(arma::diagvec(Rooti))))[0];
 }
 
 
 
 //Log density of a normal distribution
 double dlnorm(double x, double mu, double sigma2) {
-  return -0.5 * log(2 * M_PI * sigma2) - 0.5 * ((x - mu) * (x - mu)) / sigma2;
+  arma::vec Pi2Sigma2(1); Pi2Sigma2(0) = 2.0 * M_PI * sigma2;
+  return -0.5 * arma::as_scalar(arma::log(Pi2Sigma2)) - 0.5 * ((x - mu) * (x - mu)) / sigma2;
 }
 
 
@@ -55,10 +56,12 @@ double rbinomRcpp(double n, double p) {
 
 //Log density of binomial-----------------------------------
 double dlbinom(int x, int n, double pi) { 
-  double temp = std::lgamma(n + 1.0);
-  temp -=  std::lgamma(x + 1.0) + std::lgamma((n - x) + 1.0);
-  temp += x * std::log(pi) + (n - x) * std::log(1- pi);
-  return temp;
+  arma::vec const1(1), const2(1), const3(1), Pi(1);
+  const1(0) = n + 1; const2(0) = x + 1; const3(0) = (n - x) + 1; Pi(0) = pi;
+  arma::vec temp = arma::lgamma(const1);
+  temp -=  arma::lgamma(const2) + arma::lgamma(const3);
+  temp += x * arma::log(Pi) + (n - x) * arma::log(1 - Pi);
+  return arma::as_scalar(temp);
 }
 
 
@@ -254,7 +257,11 @@ arma::mat rwishRcpp(double n, arma::mat const& V) {
   int p = V.n_rows;
   arma::mat L = arma::chol(V);
   arma::mat A(p, p, arma::fill::zeros);
-  for (int i = 0; i < p; i++) A(i, i) = sqrt(rchisqRcpp(n - i));
+  arma::vec XiSqr(1);
+  for (int i = 0; i < p; i++) {
+    XiSqr(0) = rchisqRcpp(n - i);
+    A(i, i) = arma::as_scalar(arma::sqrt(XiSqr)); 
+  }
   if (p > 1) {
     arma::vec RandSN = rnormSNRcpp(p * (p - 1) / 2);
     int counter = 0;
