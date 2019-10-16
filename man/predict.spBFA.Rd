@@ -47,7 +47,7 @@ Predicts future observations from the \code{\link{spBFA}} model.
 }
 \details{
 \code{predict.spBFA} uses Bayesian krigging to predict vectors at future
- time points. The function returns the krigged factors (\code{Eta}) and alos the observed outcomes (\code{Y}).
+ time points. The function returns the krigged factors (\code{Eta}) and also the observed outcomes (\code{Y}).
 }
 \author{
 Samuel I. Berchuck

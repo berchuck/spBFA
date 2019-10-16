@@ -8,7 +8,7 @@ diagnostics(object, diags = c("dic", "dinf", "waic"),
   keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE)
 }
 \arguments{
-\item{object}{A \code{\link{spBFA}} model objectect for which diagnostics
+\item{object}{A \code{\link{spBFA}} model object for which diagnostics
 are desired from.}
 
 \item{diags}{A vector of character strings indicating the diagnostics to compute.
@@ -27,7 +27,7 @@ at each observed location is returned (default = FALSE).}
 }
 \value{
 \code{diagnostics} returns a list containing the diagnostics requested and
- possibly the deviance and/or posterior predictive distribution objectects.
+ possibly the deviance and/or posterior predictive distribution objects.
 }
 \description{
 Calculates diagnostic metrics using output from the \code{\link{spBFA}} model.

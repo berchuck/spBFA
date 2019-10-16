@@ -1,10 +1,10 @@
-###Function to get model fit diagnostics given a spBFA objectect
+###Function to get model fit diagnostics given a spBFA object
 #'
 #' diagnostics
 #'
 #' Calculates diagnostic metrics using output from the \code{\link{spBFA}} model.
 #'
-#' @param object A \code{\link{spBFA}} model objectect for which diagnostics
+#' @param object A \code{\link{spBFA}} model object for which diagnostics
 #'  are desired from.
 #'
 #' @param diags A vector of character strings indicating the diagnostics to compute.
@@ -35,7 +35,7 @@
 #'  estimator).
 #'
 #' @return \code{diagnostics} returns a list containing the diagnostics requested and
-#'  possibly the deviance and/or posterior predictive distribution objectects.
+#'  possibly the deviance and/or posterior predictive distribution objects.
 #'
 #' @author Samuel I. Berchuck
 #'
@@ -62,10 +62,10 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
   ###Set seed for reproducibility
   set.seed(54)
 
-  ###Set mcmc objectect
+  ###Set mcmc object
   NKeep <- dim(object$psi)[1]
   
-  ###Set data objectects
+  ###Set data objects
   M <- DatObj$M
   O <- DatObj$O
   K <- DatObj$K
@@ -75,7 +75,7 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
   YObserved <- DatObj$YObserved
   X <- DatObj$X
 
-  ###Construct parameter objectect
+  ###Construct parameter object
   Para <- list()
   Para$Lambda <- object$lambda
   Para$Eta <- object$eta
@@ -115,7 +115,7 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
     ###Compute mean log-likelihood
     LogLikMean <- GetLogLikMean(DatObj, Para)
 
-    ###Calculate DIC objectects
+    ###Calculate DIC objects
     DBar <- -2 * mean(LogLik)
     DHat <- -2 * LogLikMean
     pD <- DBar - DHat

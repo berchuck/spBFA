@@ -25,7 +25,7 @@
 #' @param ... other arguments.
 #'
 #' @details \code{predict.spBFA} uses Bayesian krigging to predict vectors at future
-#'  time points. The function returns the krigged factors (\code{Eta}) and alos the observed outcomes (\code{Y}).
+#'  time points. The function returns the krigged factors (\code{Eta}) and also the observed outcomes (\code{Y}).
 #'
 #' @return \code{predict.spBFA} returns a list containing the following objects.
 #'

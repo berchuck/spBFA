@@ -34,7 +34,7 @@ The data object `VFSeries` has four variables, `Visit`, `DLS`, `Time` and `Locat
 head(VFSeries)
 ```
 
-The variable `Visit` represents the visual field test visit number, `DLS` the observed outcome variable, differential light sensitvity, `Time` the time of the visual field test (in days from baseline visit) and `Location` the spatial location on the visual field that the observation occured. To help illuminate visual field data we can use the `PlotVFTimeSeries` function from the `womblR` package. `PlotVFTimeSeries` is a function that plots the observered visual field data over time at each location on the visual field.  
+The variable `Visit` represents the visual field test visit number, `DLS` the observed outcome variable, differential light sensitivity, `Time` the time of the visual field test (in days from baseline visit) and `Location` the spatial location on the visual field that the observation occurred. To help illuminate visual field data we can use the `PlotVFTimeSeries` function from the `womblR` package. `PlotVFTimeSeries` is a function that plots the observed visual field data over time at each location on the visual field.  
 
 ```{r, fig.align="center", fig.width = 5.5, fig.height = 5.5}
 PlotVfTimeSeries(Y = VFSeries$DLS,
@@ -60,25 +60,25 @@ VFSeries <- VFSeries[!VFSeries$Location %in% blind_spot, ] # remove blind spot l
 dat <- data.frame(Y = VFSeries$DLS / 10) # create data frame with scaled data
 ```
 
-Now that we have assigned the observed outcomed we move onto the temporal variable `time`. For visual field data we define this to be the time from the baseline visit. We obtain the unique days from the baseline visit and scale them to be on the year scale.
+Now that we have assigned the observed outcome we move onto the temporal variable `time`. For visual field data we define this to be the time from the baseline visit. We obtain the unique days from the baseline visit and scale them to be on the year scale.
 
 ```{r}
 Time <- unique(VFSeries$Time) / 365 # years since baseline visit
 print(Time)
 ```
 
-Our example patient has nine visual field visits and the last visit occured 2.57 years after the baseline visit. 
+Our example patient has nine visual field visits and the last visit occurred 2.57 years after the baseline visit. 
 
 ## Adjacency matrix
 
-We now specify the adjacency matrix, `W`, for our areal data analysis. We use the `HFAII_Queen` adjacency matrix for visual fields, provided in `womblR`. This is an adjacency matrix that defines an adjacecy as edges and corners (i.e., the movements of a queen in chess). The adjacency objects are preloaded and contain the blind spot, so we define our adjacency matrix as follows.
+We now specify the adjacency matrix, `W`, for our areal data analysis. We use the `HFAII_Queen` adjacency matrix for visual fields, provided in `womblR`. This is an adjacency matrix that defines an adjacency as edges and corners (i.e., the movements of a queen in chess). The adjacency objects are preloaded and contain the blind spot, so we define our adjacency matrix as follows.
 
 ```{r}
 W <- HFAII_Queen[-blind_spot, -blind_spot] # visual field adjacency matrix
 M <- dim(W)[1] # number of locations
 ```
 
-Now that we have specified the data objects, we will customize the objects that characterize Bayesian Markov chain Monte Carlo (MCMC) methods, in particular hyperparameters, starting values, metroplis tuning values and MCMC inputs. 
+Now that we have specified the data objects, we will customize the objects that characterize Bayesian Markov chain Monte Carlo (MCMC) methods, in particular hyperparameters, starting values, metropolis tuning values and MCMC inputs. 
 
 ## MCMC Characteristics
 
@@ -153,7 +153,7 @@ reg.bfa_sp <- bfa_sp(Y ~ 0, data = dat, dist = W, time = Time,  K = 10,
 ## Sampler progress:  0%..  10%..  20%..  30%..  40%..  50%..  60%..  70%..  80%..  90%..  100%..
 ```
 
-The first line of arguments are the data objects, `formula`, `data`, `dist`, `time`, and `K`. These objects must be specified for `bfa_sp` to run. Note that in the formula we use `~0`, which means that there are no covariates. The second line of objects are the MCMC characteristics objects we defined previously. These objects do not need to be defined for `spBFA` to function, but are provided for the user to custimize the model to their choosing. If they are not provided, defaults are given. Next, we specify that the infinite mixture model is used `L = Inf`. `L` can be any positive integer or infinity. The `family` is set to `tobit` since we know that visual field data is censored (`family` can be `normal`, `probit`, `tobit`, or `binomial`). If `binomial` is used, `trials` must be specified. Our temporal dependence structure is set to be `exponential`, and the spatial structure is `discrete` (i.e., areal). Finally, we define the following logicals, `gamma.shrinkage` (which controls the gamma shrinkage process), `include.space` (which controls if spatial dependency is included), and `clustering` (which controls if the Bayesian non-parametric process prior is used). We set the `seed` to 54.
+The first line of arguments are the data objects, `formula`, `data`, `dist`, `time`, and `K`. These objects must be specified for `bfa_sp` to run. Note that in the formula we use `~0`, which means that there are no covariates. The second line of objects are the MCMC characteristics objects we defined previously. These objects do not need to be defined for `spBFA` to function, but are provided for the user to customize the model to their choosing. If they are not provided, defaults are given. Next, we specify that the infinite mixture model is used `L = Inf`. `L` can be any positive integer or infinity. The `family` is set to `tobit` since we know that visual field data is censored (`family` can be `normal`, `probit`, `tobit`, or `binomial`). If `binomial` is used, `trials` must be specified. Our temporal dependence structure is set to be `exponential`, and the spatial structure is `discrete` (i.e., areal). Finally, we define the following logicals, `gamma.shrinkage` (which controls the gamma shrinkage process), `include.space` (which controls if spatial dependency is included), and `clustering` (which controls if the Bayesian non-parametric process prior is used). We set the `seed` to 54.
 
 The following are the returned objects from `reg.bfa_sp`.
 
@@ -200,7 +200,7 @@ The `diagnostics` function in the `spBFA` package can be used to calculate vario
 Diags <- spBFA::diagnostics(reg.bfa_sp, diags = c("dic", "dinf", "waic"), keepDeviance = TRUE)
 ```
 
-The `diagnostics` function calculates diagnostics that depend on both the log-likelihood and posterior predictive distribtuion. So, if any of these diagnostics are specified, one or both of these must be sampled from. The `keepDeviance` and `keepPPD` indicate whether or not these distributions should be saved for the user. We indicate that we would like the output to be saved for the log-likelihood (i.e., deviance). We explore the output by looking at the traceplot of the deviance.
+The `diagnostics` function calculates diagnostics that depend on both the log-likelihood and posterior predictive distribution. So, if any of these diagnostics are specified, one or both of these must be sampled from. The `keepDeviance` and `keepPPD` indicate whether or not these distributions should be saved for the user. We indicate that we would like the output to be saved for the log-likelihood (i.e., deviance). We explore the output by looking at the traceplot of the deviance.
 
 ```{r, fig.align = 'center', fig.width = 4, fig.height = 3.3}
 Deviance <- as.mcmc(Diags$deviance)

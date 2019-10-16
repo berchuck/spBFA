@@ -21,7 +21,7 @@ ordered spatially, second by observation type and then temporally. This means th
 the first \code{M} observations come the first spatial observation type.}
 
 \item{dist}{A \code{M x M} dimensional distance matrix. For a \code{discrete} spatial process the matrix contains binary adjacencies that dictate the
-spatial neigborhood structure and for \code{continuous} spatial processes the matrix should be a continuous distance matrix (e.g., Euclidean).}
+spatial neighborhood structure and for \code{continuous} spatial processes the matrix should be a continuous distance matrix (e.g., Euclidean).}
 
 \item{time}{A \code{Nu} dimensional vector containing the observed time points
 in increasing order.}
@@ -88,7 +88,7 @@ include: \code{"normal"}, \code{"probit"}, \code{"tobit"}, and \code{"binomial"}
  \code{Psi} is a \code{list} with two objects, dependent on if the temporal kernel is \code{exponential} or \code{ar1}.
  For \code{exponential}, the two objects are \code{APsi} and \code{BPsi}. \code{APsi}
  represents the lower bound for the uniform hyperprior, while \code{BPsi} represents
- the upper bound. The bounds must be specified carefully. For \code{ar1}, the two objets are \code{Beta} and \code{Gamma}, which are the 
+ the upper bound. The bounds must be specified carefully. For \code{ar1}, the two objects are \code{Beta} and \code{Gamma}, which are the 
  two shape parameters of a Beta distribution shifted to have domain in (-1, 1).}
 
 \item{tuning}{Either \code{NULL} or a \code{list} containing tuning values
@@ -126,7 +126,7 @@ the hyperparameters (A1 and A2) indicate the shape and rate for a gamma prior on
 \item{include.space}{A logical indicating whether a spatial process should be included. Default is TRUE, however if FALSE the spatial correlation matrix 
 is fixed as an identity matrix. This specification overrides the \code{spatial.structure} input.}
 
-\item{clustering}{A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specificed
+\item{clustering}{A logical indicating whether the Bayesian non-parametric process should be used, default is TRUE. If FALSE is specified
 each column is instead modeled with an independent spatial process.}
 }
 \value{
