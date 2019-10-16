@@ -62,7 +62,7 @@ metrobj PilotAdaptation(metrobj MetrObj, mcmcobj McmcObj, datobj DatObj) {
   MetrObj.AcceptancePsi = AcceptancePsi;
   
   //Update Rho
-  if (SpCorInd == 0 & DatObj.IS == 1) {
+  if ((SpCorInd == 0) & (DatObj.IS == 1)) {
     double MetropRho = MetrObj.MetropRho;
     double AcceptanceRho = MetrObj.AcceptanceRho;
     double PctRho = AcceptanceRho / double(PilotAdaptDenominator);

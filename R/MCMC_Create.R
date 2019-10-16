@@ -103,7 +103,7 @@ CreateDatObj <- function(formula, data, dist, time, trials, K, L, family, tempor
   DatObj$P <- P
   DatObj$X <- X
   DatObj$FamilyInd <- FamilyInd
-  DatObj$Time <- Time
+  DatObj$Time <- time
   DatObj$TempCorInd <- TempCorInd
   DatObj$SpCorInd <- SpCorInd
   DatObj$TimeDist <- TimeDist

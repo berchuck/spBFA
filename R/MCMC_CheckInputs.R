@@ -89,6 +89,24 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
     }
   } 
   
+  ###Family indicator
+  FamilyInd <- numeric(length = O)
+  if (length(family) == O) {
+    for (o in 1:O) {
+      if (family[o] == "normal") FamilyInd[o] <- 0
+      if (family[o] == "probit") FamilyInd[o] <- 1
+      if (family[o] == "tobit") FamilyInd[o] <- 2
+      if (family[o] == "binomial") FamilyInd[o] <- 3
+    }
+  }
+  if (length(family) == 1) {
+    if (family == "normal") FamilyInd <- rep(0, O)
+    if (family == "probit") FamilyInd <- rep(1, O)
+    if (family == "tobit") FamilyInd <- rep(2, O)
+    if (family == "binomial") FamilyInd <- rep(3, O)
+  }
+  C <- sum(FamilyInd == 3)
+  
   ###Data checks for covariates
   covariates <- all.vars(formula)[-1] # outcome variable
   X <- as.matrix(formula.test[, covariates])

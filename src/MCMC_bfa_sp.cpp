@@ -86,7 +86,7 @@ Rcpp::List bfa_sp_Rcpp(Rcpp::List DatObj_List,  Rcpp::List HyPara_List,
     // Rcpp::Rcout << std::fixed << "Sampling Rho:" << std::endl;
     
     //Metropolis step for Rho
-    if (SpCorInd == 0 & DatObj.IS == 1) {
+    if ((SpCorInd == 0) & (DatObj.IS == 1)) {
       Update = SampleRho(DatObj, Para, HyPara, MetrObj);
       Para = Update.first;
       MetrObj = Update.second;

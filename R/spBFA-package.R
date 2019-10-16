@@ -7,7 +7,7 @@
 #' @name spBFA
 #' @docType package
 #' @import Rcpp
-#' @importFrom stats quantile rnorm runif median
+#' @importFrom stats quantile rnorm runif median model.frame model.matrix
 #' @importFrom graphics abline axis layout par plot points polygon title segments symbols rect text lines
 #' @importFrom grDevices col2rgb colorRampPalette
 #' @importFrom utils tail

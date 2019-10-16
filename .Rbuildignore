@@ -1,2 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^spBFA-example\.pdf$
+^cran-comments\.md$
+^NEWS\.md$
+^README\.md$
