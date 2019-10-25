@@ -40,6 +40,15 @@
 #'
 #'   }
 #'
+#' @examples
+#' ###Load pre-computed regression results
+#' data(reg.bfa_sp)
+#' 
+#' ###Compute predictions
+#' pred <- predict(reg.bfa_sp, NewTimes = 3)
+#' pred.observations <- pred$Y$Y10 # observed data predictions
+#' pred.krig <- pred$Eta$Eta10 # krigged parameters
+#' 
 #' @author Samuel I. Berchuck
 #' @export
 ###Prediction function for spBFA function

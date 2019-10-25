@@ -172,6 +172,60 @@
 #'
 #'   }
 #'
+#' @examples
+#' \donttest{
+#' ###Load womblR for example visual field data
+#' library(womblR)
+#' 
+#' ###Format data for MCMC sampler
+#' blind_spot <- c(26, 35) # define blind spot
+#' VFSeries <- VFSeries[order(VFSeries$Location), ] # sort by location
+#' VFSeries <- VFSeries[order(VFSeries$Visit), ] # sort by visit
+#' VFSeries <- VFSeries[!VFSeries$Location %in% blind_spot, ] # remove blind spot locations
+#' dat <- data.frame(Y = VFSeries$DLS / 10) # create data frame with scaled data
+#' Time <- unique(VFSeries$Time) / 365 # years since baseline visit
+#' W <- HFAII_Queen[-blind_spot, -blind_spot] # visual field adjacency matrix (data object from womblR)
+#' M <- dim(W)[1] # number of locations
+#' 
+#' ###Prior bounds for psi
+#' TimeDist <- as.matrix(dist(Time))
+#' BPsi <- log(0.025) / -min(TimeDist[TimeDist > 0])
+#' APsi <- log(0.975) / -max(TimeDist)
+#' 
+#' ###MCMC options
+#' K <- 10 # number of latent factors
+#' O <- 1 # number of spatial observation types
+#' Hypers <- list(Sigma2 = list(A = 0.001, B = 0.001),
+#'                Kappa = list(SmallUpsilon = O + 1, BigTheta = diag(O)),
+#'                Delta = list(A1 = 1, A2 = 20),
+#'                Psi = list(APsi = APsi, BPsi = BPsi),
+#'                Upsilon = list(Zeta = K + 1, Omega = diag(K)))
+#' Starting <- list(Sigma2 = 1,
+#'                  Kappa = diag(O),
+#'                  Delta = 2 * (1:K),
+#'                  Psi = (APsi + BPsi) / 2,
+#'                  Upsilon = diag(K))
+#' Tuning <- list(Psi = 1)
+#' MCMC <- list(NBurn = 1000, NSims = 1000, NThin = 2, NPilot = 5)
+#' 
+#' ###Fit MCMC Sampler
+#' reg.bfa_sp <- bfa_sp(Y ~ 0, data = dat, dist = W, time = Time,  K = 10, 
+#'                      starting = Starting, hypers = Hypers, tuning = Tuning, mcmc = MCMC,
+#'                      L = Inf,
+#'                      family = "tobit",
+#'                      trials = NULL,
+#'                      temporal.structure = "exponential",
+#'                      spatial.structure = "discrete",
+#'                      seed = 54, 
+#'                      gamma.shrinkage = TRUE,
+#'                      include.space = TRUE,
+#'                      clustering = TRUE)
+#' 
+#' ###Note that this code produces the pre-computed data object "reg.bfa_sp"
+#' ###More details can be found in the vignette.
+#' 
+#' }
+#'
 # @author Samuel I. Berchuck
 #' @references Reference for Berchuck et al. 2019 is forthcoming.
 #' @export

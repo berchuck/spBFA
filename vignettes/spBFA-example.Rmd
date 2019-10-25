@@ -14,10 +14,10 @@ vignette: >
 This is a brief description of how to use the `spBFA` package within the context of glaucoma progression. To demonstrate the method we use the `VFSeries` data set from the `womblR` package. We begin by loading the packages.
 
 ```{r, echo = FALSE}
-###Start with a clean space
-rm(list = ls())
-
-###Take care of some stuff that I don't want the user to see...
+# ###Start with a clean space
+# rm(list = ls())
+# 
+# ###Take care of some stuff that I don't want the user to see...
 # path.package <- "/Users/sam/Documents/Postdoc/Software/spBFA/"
 # suppressMessages(devtools::load_all(path.package)) #loads scripts
 # suppressMessages(devtools::document(path.package)) #creates documentation
@@ -133,8 +133,7 @@ We specify that our model will run for a burn-in period of 1,000 scans, followed
 We have now specified all model objects and are prepared to implement the `bfa_sp` regression object. To demonstrate the `bfa_sp` object we will use all of its options, even those that are being used in their default settings.
 
 ```{r, include = FALSE}
-reg.bfa_sp <- bfa_sp(Y ~ 0, data = dat, family = "tobit", dist = W, time = Time, K = K, 
-                     starting = Starting, hypers = Hypers, tuning = Tuning, mcmc = MCMC)
+data(reg.bfa_sp)
 ```
 ```{r, eval = FALSE}
 reg.bfa_sp <- bfa_sp(Y ~ 0, data = dat, dist = W, time = Time,  K = 10, 

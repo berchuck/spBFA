@@ -5,7 +5,7 @@
 \title{diagnostics}
 \usage{
 diagnostics(object, diags = c("dic", "dinf", "waic"),
-  keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE)
+  keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE, seed = 54)
 }
 \arguments{
 \item{object}{A \code{\link{spBFA}} model object for which diagnostics
@@ -24,6 +24,9 @@ is returned (default = FALSE).}
 at each observed location is returned (default = FALSE).}
 
 \item{Verbose}{A boolean logical indicating whether progress should be output (default = TRUE).}
+
+\item{seed}{An integer value used to set the seed for the random number generator
+(default = 54).}
 }
 \value{
 \code{diagnostics} returns a list containing the diagnostics requested and
@@ -45,6 +48,15 @@ To assess model fit, DIC, d-infinity and WAIC are used. DIC is based on the
  predictive density and p_waic_2 is the estimated effective number of parameters
  based on the variance estimator from Vehtari et al. 2016. (p_waic_1 is the mean
  estimator).
+}
+\examples{
+###Load pre-computed regression results
+data(reg.bfa_sp)
+
+###Compute and print diagnostics
+diags <- diagnostics(reg.bfa_sp)
+print(unlist(diags))
+
 }
 \references{
 Gelfand, A. E., & Ghosh, S. K. (1998). Model choice: a minimum posterior predictive loss approach. Biometrika, 1-11.

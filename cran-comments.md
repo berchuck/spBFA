@@ -1,5 +1,6 @@
-## Submission of version 1.0 of spBFA
-This package implements a Bayesian non-parametric spatial factor analysis. There is currently no reference for this methodology. There is a paper that is to be submitted to a journal in the next month and then a version of the manuscript will be placed on arXiv.org. I plan on updating the spBFA R package with the arXiv.org reference when it is available (and then the journal reference when it is published). 
+## Re-Submission of version 1.0 of spBFA
+This is a re-submission of the spBFA R package. The following has been changed:
+* For the example in the function "bfa_sp", we changed the tag from \dontrun to \donttest. It is not realistic to get a test of the the function bfa_sp under 5 seconds, so this seems appropriate. Thanks.
 
 ## Test environments
 * Mac: x86_64-apple-darwin13.4.0 (64-bit), R 3.5.1

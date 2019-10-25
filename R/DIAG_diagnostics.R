@@ -21,6 +21,9 @@
 #'  
 #' @param Verbose A boolean logical indicating whether progress should be output (default = TRUE).
 #'
+#' @param seed An integer value used to set the seed for the random number generator
+#'  (default = 54).
+#'  
 #' @details To assess model fit, DIC, d-infinity and WAIC are used. DIC is based on the
 #'  deviance statistic and penalizes for the complexity of a model with an effective
 #'  number of parameters estimate pD (Spiegelhalter et al 2002). The d-infinity posterior
@@ -37,6 +40,14 @@
 #' @return \code{diagnostics} returns a list containing the diagnostics requested and
 #'  possibly the deviance and/or posterior predictive distribution objects.
 #'
+#' @examples
+#' ###Load pre-computed regression results
+#' data(reg.bfa_sp)
+#' 
+#' ###Compute and print diagnostics
+#' diags <- diagnostics(reg.bfa_sp)
+#' print(unlist(diags))
+#' 
 #' @author Samuel I. Berchuck
 #'
 #' @references Gelfand, A. E., & Ghosh, S. K. (1998). Model choice: a minimum posterior predictive loss approach. Biometrika, 1-11.
@@ -45,7 +56,7 @@
 #' @references Watanabe, S. (2010). Asymptotic equivalence of Bayes cross validation and widely applicable information criterion in singular learning theory. Journal of Machine Learning Research, 11(Dec), 3571-3594.
 #'
 #' @export
-diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE) {
+diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE, seed = 54) {
 
   ###Check Inputs
   if (missing(object)) stop('"object" is missing')
@@ -60,7 +71,7 @@ diagnostics <- function(object, diags = c("dic", "dinf", "waic"), keepDeviance =
   DatAug <- object$dataug
 
   ###Set seed for reproducibility
-  set.seed(54)
+  set.seed(seed)
 
   ###Set mcmc object
   NKeep <- dim(object$psi)[1]

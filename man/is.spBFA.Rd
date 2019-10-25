@@ -17,3 +17,11 @@ is.spBFA(x)
 The \code{\link{spBFA}} class is defined as the regression object that
  results from the \code{\link{spBFA}} regression function.
 }
+\examples{
+###Load pre-computed results
+data(reg.bfa_sp)
+
+###Test function
+is.spBFA(reg.bfa_sp)
+
+}

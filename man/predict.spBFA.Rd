@@ -49,6 +49,16 @@ Predicts future observations from the \code{\link{spBFA}} model.
 \code{predict.spBFA} uses Bayesian krigging to predict vectors at future
  time points. The function returns the krigged factors (\code{Eta}) and also the observed outcomes (\code{Y}).
 }
+\examples{
+###Load pre-computed regression results
+data(reg.bfa_sp)
+
+###Compute predictions
+pred <- predict(reg.bfa_sp, NewTimes = 3)
+pred.observations <- pred$Y$Y10 # observed data predictions
+pred.krig <- pred$Eta$Eta10 # krigged parameters
+
+}
 \author{
 Samuel I. Berchuck
 }
