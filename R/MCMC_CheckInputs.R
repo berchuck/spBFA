@@ -377,7 +377,7 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
         if (!all(!is.na(starting$Upsilon))) stop('starting: "Upsilon" cannot have missing values')
         if (!all(is.finite(starting$Upsilon))) stop('starting: "Upsilon" cannot have infinite values')
         if (sum( !( (starting$Upsilon) == t(starting$Upsilon) ) ) > 0) stop('starting: "Upsilon" must be symmetric')
-        if ((det(starting$Upsilon) - 0) < 0.0000000001) stop('starting: "Upsilon" is close to singular')
+        if ((det(starting$Upsilon) - 0) < 0.000000000000001) stop('starting: "Upsilon" is close to singular')
       }
       if (K == 1) {
         if (!is.scalar(starting$Upsilon)) stop('starting: "Upsilon" must be a scalar when K = 1')

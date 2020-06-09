@@ -235,20 +235,31 @@ bfa_sp <- function(formula, data, dist, time, K, L = Inf, trials = NULL,
                    gamma.shrinkage = TRUE, include.space = TRUE, clustering = TRUE) {
   
   ###Function Inputs
-  # formula = sens ~ age
+  # formula = TD ~ 0
   # data = dat
+  # family = "normal"
   # dist = W
   # time = Time
+  # K = K
+  # starting = Starting
+  # hypers = Hypers
+  # tuning = Tuning
+  # mcmc = MCMC
+  # 
+  # # formula = sens ~ age
+  # # data = dat
+  # # dist = W
+  # # time = Time
   # trials = NULL
   # starting = Starting
   # hypers = Hypers
   # tuning = Tuning
   # mcmc = MCMC
-  # family = "tobit"
+  # # family = "tobit"
   # temporal.structure = "exponential"
   # spatial.structure = "discrete"
   # seed = 54
-  # K = K
+  # # K = K
   # L = Inf
   # gamma.shrinkage = TRUE
   # include.space = TRUE
