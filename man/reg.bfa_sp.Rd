@@ -4,8 +4,10 @@
 \name{reg.bfa_sp}
 \alias{reg.bfa_sp}
 \title{Pre-computed regression results from \code{bfa_sp}}
-\format{The data object \code{reg.bfa_sp} is a \code{spBFA} data object that is the result of implementing the MCMC code in the vignette.
-        It is presented here because the run-time would be unecessarily long when compiling the R package.}
+\format{
+The data object \code{reg.bfa_sp} is a \code{spBFA} data object that is the result of implementing the MCMC code in the vignette.
+        It is presented here because the run-time would be unecessarily long when compiling the R package.
+}
 \usage{
 data(reg.bfa_sp)
 }

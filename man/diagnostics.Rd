@@ -4,8 +4,14 @@
 \alias{diagnostics}
 \title{diagnostics}
 \usage{
-diagnostics(object, diags = c("dic", "dinf", "waic"),
-  keepDeviance = FALSE, keepPPD = FALSE, Verbose = TRUE, seed = 54)
+diagnostics(
+  object,
+  diags = c("dic", "dinf", "waic"),
+  keepDeviance = FALSE,
+  keepPPD = FALSE,
+  Verbose = TRUE,
+  seed = 54
+)
 }
 \arguments{
 \item{object}{A \code{\link{spBFA}} model object for which diagnostics

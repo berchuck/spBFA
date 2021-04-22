@@ -3,7 +3,6 @@
 \docType{package}
 \name{spBFA}
 \alias{spBFA}
-\alias{spBFA-package}
 \title{spBFA}
 \description{
 \code{spBFA} is a package for Bayesian spatial factor analysis. A corresponding manuscript is forthcoming.

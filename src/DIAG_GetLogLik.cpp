@@ -9,6 +9,8 @@
 // [[Rcpp::export]]
 arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, bool Verbose) {
 
+  Rcpp::Rcout << std::fixed << 1+1 << std::endl;
+  
   //Convert Rcpp::Lists to C++ structs
   datobjDIAG DatObj = ConvertDatObjDIAG(DatObj_List);
   paraDIAG Para = ConvertParaDIAG(Para_List);

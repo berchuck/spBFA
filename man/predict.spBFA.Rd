@@ -4,8 +4,15 @@
 \alias{predict.spBFA}
 \title{predict.spBFA}
 \usage{
-\method{predict}{spBFA}(object, NewTimes, NewX = NULL,
-  NewTrials = NULL, Verbose = TRUE, type = "temporal", ...)
+\method{predict}{spBFA}(
+  object,
+  NewTimes,
+  NewX = NULL,
+  NewTrials = NULL,
+  Verbose = TRUE,
+  type = "temporal",
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{\link{spBFA}} model object for which predictions

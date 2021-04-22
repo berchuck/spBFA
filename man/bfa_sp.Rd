@@ -4,11 +4,26 @@
 \alias{bfa_sp}
 \title{Spatial factor analysis using a Bayesian hierarchical model.}
 \usage{
-bfa_sp(formula, data, dist, time, K, L = Inf, trials = NULL,
-  family = "normal", temporal.structure = "exponential",
-  spatial.structure = "discrete", starting = NULL, hypers = NULL,
-  tuning = NULL, mcmc = NULL, seed = 54, gamma.shrinkage = TRUE,
-  include.space = TRUE, clustering = TRUE)
+bfa_sp(
+  formula,
+  data,
+  dist,
+  time,
+  K,
+  L = Inf,
+  trials = NULL,
+  family = "normal",
+  temporal.structure = "exponential",
+  spatial.structure = "discrete",
+  starting = NULL,
+  hypers = NULL,
+  tuning = NULL,
+  mcmc = NULL,
+  seed = 54,
+  gamma.shrinkage = TRUE,
+  include.space = TRUE,
+  clustering = TRUE
+)
 }
 \arguments{
 \item{formula}{A \code{formula} object, corresponding to the spatial factor analysis model. The response must be on the left of a \code{~} operator, and the terms on the right 
