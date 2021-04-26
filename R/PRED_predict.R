@@ -22,6 +22,9 @@
 #'
 #' @param Verbose A boolean logical indicating whether progress should be output.
 #'
+#' @param seed An integer value used to set the seed for the random number generator
+#'  (default = 54).
+#'  
 #' @param ... other arguments.
 #'
 #' @details \code{predict.spBFA} uses Bayesian krigging to predict vectors at future
@@ -52,7 +55,7 @@
 #' @author Samuel I. Berchuck
 #' @export
 ###Prediction function for spBFA function
-predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, Verbose = TRUE, type = "temporal", ...) {
+predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, type = "temporal", Verbose = TRUE, seed = 54, ...) {
 
   ###Check Inputs
   if (missing(object)) stop('"object" is missing')
@@ -67,7 +70,7 @@ predict.spBFA <- function(object, NewTimes, NewX = NULL, NewTrials = NULL, Verbo
   if (!is.logical(Verbose)) stop('"Verbose" must be a logical')
   
   ###Set seed for reproducibility
-  set.seed(54)
+  set.seed(seed)
 
   ###Set data objects
   DatObj <- object$datobj

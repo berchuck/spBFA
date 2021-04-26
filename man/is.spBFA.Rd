@@ -9,6 +9,9 @@ is.spBFA(x)
 \arguments{
 \item{x}{object to be tested.}
 }
+\value{
+\code{is.spBFA} returns a logical, depending on whether the object is of class \code{\link{spBFA}}.
+}
 \description{
 \code{is.spBFA} is a general test of an object being interpretable as a
 \code{\link{spBFA}} object.

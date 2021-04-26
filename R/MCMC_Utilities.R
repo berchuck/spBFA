@@ -149,6 +149,8 @@ SummarizeMetropolis <- function(DatObj, MetrObj, MetropRcpp, McmcObj) {
 #' @details The \code{\link{spBFA}} class is defined as the regression object that
 #'  results from the \code{\link{spBFA}} regression function.
 #'
+#' @return \code{is.spBFA} returns a logical, depending on whether the object is of class \code{\link{spBFA}}.
+#'   
 #' @examples 
 #' ###Load pre-computed results
 #' data(reg.bfa_sp)

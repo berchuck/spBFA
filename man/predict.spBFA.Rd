@@ -9,8 +9,9 @@
   NewTimes,
   NewX = NULL,
   NewTrials = NULL,
-  Verbose = TRUE,
   type = "temporal",
+  Verbose = TRUE,
+  seed = 54,
   ...
 )
 }
@@ -29,9 +30,12 @@ are the same as the final time point.}
 and contain only non-negative integers. The default sets \code{NewTrials} to \code{NULL}, which assumes the trials for all predictions
 are the same as the final time point.}
 
+\item{type}{A character string indicating the type of prediction, choices include "temporal" and "spatial". Spatial prediction has not been implemented yet.}
+
 \item{Verbose}{A boolean logical indicating whether progress should be output.}
 
-\item{type}{A character string indicating the type of prediction, choices include "temporal" and "spatial". Spatial prediction has not been implemented yet.}
+\item{seed}{An integer value used to set the seed for the random number generator
+(default = 54).}
 
 \item{...}{other arguments.}
 }
