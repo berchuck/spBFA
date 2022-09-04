@@ -48,7 +48,8 @@ arma::colvec GetLogLik(Rcpp::List DatObj_List, Rcpp::List Para_List, int NKeep, 
   //Verbose output
   arma::vec VerboseSeq;
   if (Verbose) {
-    VerboseSeq << 0.25 << 0.50 << 0.75;
+    VerboseSeq = {0.25, 0.50, 0.75}; 	// new standard modern C++ brace initialization
+    // VerboseSeq << 0.25 << 0.50 << 0.75;
     VerboseSeq *= NKeep;
     Rcpp::Rcout << std::fixed << "Calculating Log-Lik: 0%.. ";
   }
