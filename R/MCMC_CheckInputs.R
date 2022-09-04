@@ -25,7 +25,7 @@ CheckInputs <- function(formula, data, dist, time, K, L, trials, starting, hyper
   if (!spatial.structure %in% c("discrete", "continuous")) stop('spatial.structure: must be one of "discrete" or "continuous"')
   
   ###Data and Formula
-  if (!(class(formula) == "formula")) stop('"formula" must be of class formula')
+  if (!inherits(formula, "formula")) stop('"formula" must be of class formula')
   if (!is.data.frame(data)) stop('"data" must be of class data.frame')
   formula.test <- model.frame(formula, data) # check that the variables in formula are in data (will return error)
   
