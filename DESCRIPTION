@@ -1,8 +1,8 @@
 Package: spBFA
 Type: Package
 Title: Spatial Bayesian Factor Analysis
-Version: 1.2
-Date: 2022-09-04
+Version: 1.4.0
+Date: 2025-09-30
 Authors@R: person("Samuel I.", "Berchuck", email = "sib2@duke.edu", role = c("aut", "cre"))
 Description: Implements a spatial Bayesian non-parametric factor analysis model 
     with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC). 
@@ -17,16 +17,19 @@ Description: Implements a spatial Bayesian non-parametric factor analysis model
     the package can be found in the accompanying vignette. Furthermore, the 
     details of the package can be found in "Bayesian Non-Parametric Factor 
     Analysis for Longitudinal Spatial Surfaces", by Berchuck et al (2019), 
-    <arXiv:1911.04337>. The paper is in press at the journal Bayesian Analysis.
+    <doi:10.1214/20-BA1253> in Bayesian Analysis.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.2
 NeedsCompilation: yes
 Depends: R (>= 3.0.2)
-Imports: graphics, grDevices, msm (>= 1.0.0), mvtnorm (>= 1.0-0), pgdraw (>= 1.0), Rcpp (>= 0.12.9), stats, utils
+Imports: graphics, grDevices, msm (>= 1.0.0), mvtnorm (>= 1.0-0),
+        pgdraw (>= 1.0), Rcpp (>= 0.12.9), stats, utils
 Suggests: coda, classInt, knitr, rmarkdown, womblR (>= 1.0.3)
 LinkingTo: Rcpp, RcppArmadillo (>= 0.7.500.0.0)
 VignetteBuilder: knitr
 Language: en-US
+Author: Samuel I. Berchuck [aut, cre]
+Maintainer: Samuel I. Berchuck <sib2@duke.edu>

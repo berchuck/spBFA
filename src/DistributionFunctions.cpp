@@ -204,17 +204,17 @@ double rgammaRcpp(double Alpha, double Theta) {
 // accept-reject method that is more efficient than the inverse sampling version
 // that I currently use for values far from the truncation value (i.e, zero).
 double rtnormRcpp(double mean, double sd, bool Above) {
-
+  
   //Declare Variables
   double RandU = randuRcpp();
   double ScaledMean = -mean / sd;
-
+  
   //Truncation Above by Zero
   if (Above) return sd * qnormRcpp(RandU * pnormRcpp(ScaledMean)) + mean;
-
+  
   //Truncation Below by Zero
   else return sd * qnormRcpp(RandU - pnormRcpp(ScaledMean) * (RandU - 1)) + mean;
-
+  
 }
 // arma::vec rtnormRcppMSM(int N, arma::vec const& mean, arma::vec const& sd, double lower, double upper) {
 //
@@ -236,12 +236,12 @@ double rtnormRcpp(double mean, double sd, bool Above) {
 //
 // }
 double rtnormRcppMSM(double mean, double sd, double lower, double upper) {
-
+  
   //Set truncated normal function
   // Rcpp::Environment msm("package:msm"); //this is equivalent to library(msm)
   Rcpp::Environment msm = Rcpp::Environment::namespace_env("msm"); //This is equivalent to PACKAGE::FUNCTION()
   Rcpp::Function rtnorm = msm["rtnorm"];
-
+  
   //Evaluate pmvnorm
   SEXP rtnormSEXP;
   rtnormSEXP = rtnorm(Rcpp::Named("n", 1),
@@ -249,10 +249,10 @@ double rtnormRcppMSM(double mean, double sd, double lower, double upper) {
                       Rcpp::Named("sd", sd),
                       Rcpp::Named("lower", lower),
                       Rcpp::Named("upper", upper));
-
+  
   //Convert output to double
   return Rcpp::as<double>(rtnormSEXP);
-
+  
 }
 
 
@@ -292,22 +292,22 @@ arma::mat riwishRcpp(double n, arma::mat const& V) {
 
 //Multivariate normal CDF------------------------------------------------------------------
 double pmvnormRcpp(int NBelowVisit, arma::vec const& CondMean, arma::mat const& CondCovRound) {
-
-    //Set multivariate normal CDF function
-    // Rcpp::Environment mvtnorm("package:mvtnorm"); //This is equivalent to library(mvtnorm)
-    Rcpp::Environment mvtnorm = Rcpp::Environment::namespace_env("mvtnorm"); //This is equivalent to PACKAGE::FUNCTION()
-    Rcpp::Function pmvnorm = mvtnorm["pmvnorm"];
-
-    //Evaluate pmvnorm
-    Rcpp::NumericVector Upper(NBelowVisit);
-    Rcpp::NumericVector Mean = Rcpp::NumericVector(CondMean.begin(), CondMean.end());
-    SEXP pmvnormSEXP = pmvnorm(Rcpp::Named("upper", Upper),
-                               Rcpp::Named("mean", Mean),
-                               Rcpp::Named("sigma", CondCovRound));
-
-    //Convert output to double
-    return Rcpp::as<double>(pmvnormSEXP);
-
+  
+  //Set multivariate normal CDF function
+  // Rcpp::Environment mvtnorm("package:mvtnorm"); //This is equivalent to library(mvtnorm)
+  Rcpp::Environment mvtnorm = Rcpp::Environment::namespace_env("mvtnorm"); //This is equivalent to PACKAGE::FUNCTION()
+  Rcpp::Function pmvnorm = mvtnorm["pmvnorm"];
+  
+  //Evaluate pmvnorm
+  Rcpp::NumericVector Upper(NBelowVisit);
+  Rcpp::NumericVector Mean = Rcpp::NumericVector(CondMean.begin(), CondMean.end());
+  SEXP pmvnormSEXP = pmvnorm(Rcpp::Named("upper", Upper),
+                             Rcpp::Named("mean", Mean),
+                             Rcpp::Named("sigma", CondCovRound));
+  
+  //Convert output to double
+  return Rcpp::as<double>(pmvnormSEXP);
+  
 }
 
 

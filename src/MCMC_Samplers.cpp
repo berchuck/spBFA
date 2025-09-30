@@ -1,4 +1,6 @@
 #define ARMA_DONT_PRINT_ERRORS //So the cholesky warning is suppressed
+#include <limits>
+#include <cmath>
 #include <RcppArmadillo.h>
 #include "MCMC_bfa_sp.h"
 
@@ -20,7 +22,7 @@ arma::mat SampleOmega(int f, datobj DatObj, para Para) {
   MeanOut(arma::span::all, arma::span(0, 0), arma::span(0, 0)) = Mean;
   MeanOut = arma::reshape(MeanOut, M, O, Nu);
   arma::mat MeanMat = MeanOut(arma::span::all, arma::span(f, f), arma::span::all);
-
+  
   //Sample latent Variable from full conditional
   arma::mat omega = arma::reshape(pgRcpp(arma::vectorise(TrialsMat), arma::vectorise(MeanMat)), M, Nu);
   return omega;
@@ -53,8 +55,9 @@ datobj SampleUpper(datobj DatObj, para Para, dataug DatAug) {
   //Sample latent Variable from full conditional
   for (arma::uword i = 0; i < NAbove; i++) {
     double Temp = rtnormRcpp(Mu(i), SD(i), false);
-    if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), 0, arma::datum::inf);
-    if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Probit sampling step. Most likey cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Probit model. Consider scaling towards zero and re-running.");
+    if (!std::isfinite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), 0, std::numeric_limits<double>::infinity());
+    // if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), 0, arma::datum::inf);
+    if (!std::isfinite(Temp)) Rcpp::stop("infinte value sampled in Probit sampling step. Most likey cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Probit model. Consider scaling towards zero and re-running.");
     YStar(WhichAbove(i)) = Temp;
   }
   DatObj.YStar = YStar;
@@ -88,8 +91,9 @@ datobj SampleLower(datobj DatObj, para Para, dataug DatAug) {
   //Sample latent Variable from full conditional
   for (arma::uword i = 0; i < NBelow; i++) {
     double Temp = rtnormRcpp(Mu(i), SD(i), true);
-    if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), -arma::datum::inf, 0);
-    if (!arma::is_finite(Temp)) Rcpp::stop("infinte value sampled in Tobit/Probit sampling step. Most likely cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Tobit/Probit model. Consider scaling towards zero and re-running.");
+    // if (!arma::is_finite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), -arma::datum::inf, 0);
+    if (!std::isfinite(Temp)) Temp = rtnormRcppMSM(Mu(i), SD(i), -std::numeric_limits<double>::infinity(), 0);
+    if (!std::isfinite(Temp)) Rcpp::stop("infinte value sampled in Tobit/Probit sampling step. Most likely cause for this error is that the data being used is inappropriate (i.e., to far from zero) for a Tobit/Probit model. Consider scaling towards zero and re-running.");
     YStar(WhichBelow(i)) = Temp;
   }
   DatObj.YStar = YStar;
@@ -124,13 +128,13 @@ std::pair<datobj, para> SampleY(datobj DatObj, para Para, dataug DatAug) {
     arma::cube YStarOut(N, 1, 1);
     YStarOut(arma::span::all, arma::span(0, 0), arma::span(0, 0)) = YStar;
     YStarOut = arma::reshape(YStarOut, M, O, Nu);
-  
+    
     //Loop over latent dimensions
     for (arma::uword f = 0; f < O; f++) {
-  
+      
       //Observation specifics
       int FamInd = FamilyInd(f);
-  
+      
       //Polya-Gamma latent process updates
       if (FamInd == 3) {
         
@@ -142,10 +146,10 @@ std::pair<datobj, para> SampleY(datobj DatObj, para Para, dataug DatAug) {
         //Update Polya-Gamma objects
         YStarOut(arma::span::all, arma::span(f, f), arma::span::all) = (chi % omegaInv);
         Cov(arma::span::all, arma::span(f, f), arma::span::all) = omegaInv;
-  
+        
       }
       
-    //End loop over observation dimension
+      //End loop over observation dimension
     }
     YStar = arma::vectorise(YStarOut);
   }
@@ -155,7 +159,7 @@ std::pair<datobj, para> SampleY(datobj DatObj, para Para, dataug DatAug) {
   DatObj.YStarWide = arma::reshape(YStar, M * O, Nu);
   Para.Cov = Cov;
   return std::pair<datobj, para>(DatObj, Para);
-
+  
 }
 
 
@@ -177,7 +181,7 @@ para SampleSigma2(datobj DatObj, para Para, hypara HyPara) {
   arma::mat MeanMat = arma::reshape(Mean, M * O, Nu);
   arma::mat Sigma2 = Para.Sigma2;
   arma::cube Cov = Para.Cov;
-
+  
   //Set hyperparameter objects
   double A = HyPara.A;
   double B = HyPara.B;
@@ -197,25 +201,25 @@ para SampleSigma2(datobj DatObj, para Para, hypara HyPara) {
     
     //Loop over locations
     for (arma::uword i = 0; i < M; i++) {
-    
+      
       //Location specific objects
       Index = i + M * o;
       arma::rowvec Diff = YStarWide.row(Index) - MeanMat.row(Index);
-  
+      
       //Calculate rate
       double Resids = arma::as_scalar(Diff * arma::trans(Diff));
-    
+      
       //Sample sigma2Io
       double Rate = B + 0.5 * Resids;
       Sigma2(i, c) = rigammaRcpp(Shape, Rate);
       
-    //End loop over locations  
+      //End loop over locations  
     }
     
     //Update covariance
     Cov(arma::span::all, arma::span(o, o), arma::span::all) = arma::repmat(Sigma2.col(c), 1, Nu);
-
-  //End loop over observations 
+    
+    //End loop over observations 
   }
   
   //Update parameters object
@@ -244,7 +248,7 @@ std::pair<para, metrobj> SamplePsi(datobj DatObj, para Para, hypara HyPara, metr
   arma::mat CholHPsi = Para.CholHPsi;
   arma::mat Upsilon = Para.Upsilon;
   arma::colvec Eta = Para.Eta;
-
+  
   //Set hyperparameter objects
   double APsi = HyPara.APsi;
   double BPsi = HyPara.BPsi;
@@ -269,7 +273,7 @@ std::pair<para, metrobj> SamplePsi(datobj DatObj, para Para, hypara HyPara, metr
     
     //Compute Phi Proposal
     PsiProposal = (BPsi * exp(BigDeltaProposal) + APsi) / (1 + exp(BigDeltaProposal));
-
+    
     //Fix numerical issue where PsiProposal can equal APsi or BPsi
     // arma::vec PsiProposalVec(1), APsiVec(1), BPsiVec(1);
     // PsiProposalVec(0) = PsiProposal;
@@ -331,7 +335,7 @@ std::pair<para, metrobj> SamplePsi(datobj DatObj, para Para, hypara HyPara, metr
     Para.HPsi = HPsiProposal;
     Para.CholHPsi = CholHPsiProposal;
     Para.HPsiInv = P * arma::trans(P);
-
+    
   }
   
   //Return output object
@@ -348,12 +352,12 @@ para SampleUpsilon(datobj DatObj, para Para, hypara HyPara) {
   int Nu = DatObj.Nu;
   arma::mat EyeO = DatObj.EyeO;
   int K = DatObj.K;
-
+  
   //Set parameters
   arma::mat BigPhi = Para.BigPhi;
   arma::mat HPsiInv = Para.HPsiInv;
   arma::mat Lambda = Para.Lambda;
-
+  
   //Set hyperparameter objects
   double Zeta = HyPara.Zeta;
   arma::mat Omega = HyPara.Omega;
@@ -402,7 +406,7 @@ para SampleBeta(datobj DatObj, para Para, hypara HyPara) {
   //Set hyperparameters
   arma::mat SigmaBetaInv = HyPara.SigmaBetaInv;
   arma::colvec SigmaBetaInvMuBeta = HyPara.SigmaBetaInvMuBeta;
-
+  
   //Compute moments
   arma::mat Sum1(P, P, arma::fill::zeros);
   arma::colvec Sum2(P, arma::fill::zeros);
@@ -422,7 +426,7 @@ para SampleBeta(datobj DatObj, para Para, hypara HyPara) {
   //Update parameters dependent on delta
   arma::colvec XBeta = X * Beta;
   arma::colvec Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
-
+  
   //Update parameters object
   Para.Beta = Beta;
   Para.Mean = Mean;
@@ -444,7 +448,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   int Nu = DatObj.Nu;
   int M = DatObj.M;
   int O = DatObj.O;
-
+  
   //Set parameters
   arma::mat BigPhi = Para.BigPhi;
   arma::mat Lambda = Para.Lambda;
@@ -453,7 +457,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
   arma::mat UpsilonInv = Para.UpsilonInv;
   arma::colvec XBeta = Para.XBeta;
   arma::mat XBetaMat = arma::reshape(XBeta, M * O, Nu);
-
+  
   //Declarations
   arma::vec SeqNu = arma::linspace<arma::vec>(0, Nu - 1, Nu);
   arma::uvec IndecesT(1), IndecesMinusT(Nu - 1);
@@ -481,7 +485,7 @@ para SampleEta(datobj DatObj, para Para, hypara HyPara) {
     EtaT = rmvnormRcpp(1, MeanEtaT, CovEtaT);
     BigPhi.col(t) = EtaT;
     
-  //End loop over visits
+    //End loop over visits
   }
   
   //Update parameters dependent on eta
@@ -553,11 +557,11 @@ para SampleDelta(datobj DatObj, para Para, hypara HyPara) {
       
       //Sample Deltah
       Delta(h) = rgammaRcpp(Shape, Rate);
-  
-    //End loop over deltas  
+      
+      //End loop over deltas  
     }
-  
-  //End shrinkage prior
+    
+    //End shrinkage prior
   }
   
   //NO Gamma shrinkage prior
@@ -583,10 +587,10 @@ para SampleDelta(datobj DatObj, para Para, hypara HyPara) {
       //Sample Deltah
       Delta(j) = rgammaRcpp(Shape, Rate);
       
-    //End loop over deltas  
+      //End loop over deltas  
     }
     
-  //End NO shrinkage prior
+    //End NO shrinkage prior
   }
   
   //Update parameters object
@@ -624,7 +628,7 @@ std::pair<para, metrobj> SampleRho(datobj DatObj, para Para, hypara HyPara, metr
   //Set hyperparameter objects
   double ARho = HyPara.ARho;
   double BRho = HyPara.BRho;
-
+  
   //Set metropolis objects
   double MetropRho = sqrt(MetrObj.MetropRho);
   double AcceptanceRho = MetrObj.AcceptanceRho;
@@ -686,7 +690,7 @@ std::pair<para, metrobj> SampleRho(datobj DatObj, para Para, hypara HyPara, metr
     }
   }
   double Component1 = Component1A - Component1B;
-
+  
   //Jacobian component 1
   double Component2A = BigDeltaProposal;
   double Component2B = BigDelta;
@@ -734,7 +738,7 @@ para SampleKappa(datobj DatObj, para Para, hypara HyPara) {
   int L = DatObj.L;
   int LInf = DatObj.LInf;
   arma::mat EyeO = DatObj.EyeO;
-
+  
   //Set parameter objects
   arma::cube Alpha = Para.Alpha;
   arma::colvec LStarJ = Para.LStarJ;
@@ -790,7 +794,7 @@ para SampleAlpha(datobj DatObj, para Para) {
   
   //Different samplers depending on whether a BNP model is used
   if (DatObj.CL == 1) {
-  
+    
     //Set data objects
     int K = DatObj.K;
     int M = DatObj.M;
@@ -828,14 +832,14 @@ para SampleAlpha(datobj DatObj, para Para) {
         arma::colvec MeanAlpha = CovAlpha * arma::trans(ZJ.row(l));
         arma::colvec AlphaJL = rmvnormRcpp(1, MeanAlpha, CovAlpha);
         AlphaJ.row(l) = arma::trans(AlphaJL);  
-          
-      //End loop over clusters  
-      }
         
+        //End loop over clusters  
+      }
+      
       //Update Z
       Alpha.slice(j) = AlphaJ;
       
-    //End loop over columns 
+      //End loop over columns 
     }
     
     //Update Weights
@@ -848,10 +852,10 @@ para SampleAlpha(datobj DatObj, para Para) {
     Para.logWeights = logWeights;
     Para.Weights = Weights;
     Para.LStarJ = LStarJ;
-   
-  //End sampler for BNP version 
+    
+    //End sampler for BNP version 
   }
-
+  
   //Sampler for non-BNP version
   if (DatObj.CL == 0) {
     
@@ -864,7 +868,7 @@ para SampleAlpha(datobj DatObj, para Para) {
     arma::mat X = DatObj.X;
     arma::Col<int> Indeces = DatObj.Indeces;
     arma::mat YStarWide = DatObj.YStarWide;
-
+    
     //Set parameter objects
     arma::mat KappaInv = Para.KappaInv;
     arma::mat SpCovInv = Para.SpCovInv;
@@ -874,7 +878,7 @@ para SampleAlpha(datobj DatObj, para Para) {
     arma::mat Lambda = Para.Lambda;
     arma::colvec Eta = Para.Eta;
     arma::colvec XBeta = Para.XBeta;
-
+    
     //Covariance object
     arma::mat CovAlphaFixed = arma::kron(KappaInv, SpCovInv);
     
@@ -908,15 +912,15 @@ para SampleAlpha(datobj DatObj, para Para) {
       Alpha(arma::span(0, 0), arma::span::all, arma::span(j, j)) = AlphaJ; 
       Lambda.col(j) = AlphaJ;
       
-    //End loop over columns 
+      //End loop over columns 
     }
     
     //Update parameters object
     Para.Alpha = Alpha;
     Para.Lambda = Lambda;
     Para.Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
-
-  //End non-BNP sampler  
+    
+    //End non-BNP sampler  
   }
   return Para;
   
@@ -956,36 +960,38 @@ para SampleZ(datobj DatObj, para Para) {
     //Loop over spatial observations
     arma::mat ZJ(L, M * O);
     for (arma::uword o = 0; o < O; o++) {
-    
+      
       //Loop over spatial locations
       for (arma::uword i = 0; i < M; i++) {
-      
-      //Location specific
-      Index = i + M * o;
-      arma::uword XiOIJ = Xi(Index, j);
-
-      //Loop over clusters L
-      for (arma::uword l = 0; l < UpperL; l++) {
         
-        //Sample zjl(s_i)
-        double ZOIJL;
-        if (XiOIJ > l) ZOIJL = rtnormRcppMSM(AlphaJ(l, Index), 1, -arma::datum::inf, 0);
-        if (XiOIJ == l) ZOIJL = rtnormRcppMSM(AlphaJ(l, Index), 1, 0, arma::datum::inf);
-        ZJ(l, Index) = ZOIJL;
-      
-      //End loop over clusters  
+        //Location specific
+        Index = i + M * o;
+        arma::uword XiOIJ = Xi(Index, j);
+        
+        //Loop over clusters L
+        for (arma::uword l = 0; l < UpperL; l++) {
+          
+          //Sample zjl(s_i)
+          double ZOIJL;
+          // if (XiOIJ > l) ZOIJL = rtnormRcppMSM(AlphaJ(l, Index), 1, -arma::datum::inf, 0);
+          // if (XiOIJ == l) ZOIJL = rtnormRcppMSM(AlphaJ(l, Index), 1, 0, arma::datum::inf);
+          if (XiOIJ > l) ZOIJL = rtnormRcppMSM(AlphaJ(l, Index), 1, -std::numeric_limits<double>::infinity(), 0);
+          if (XiOIJ == l) ZOIJL = rtnormRcppMSM(AlphaJ(l, Index), 1, 0, std::numeric_limits<double>::infinity());
+          ZJ(l, Index) = ZOIJL;
+          
+          //End loop over clusters  
+        }
+        
+        //End loop over locations
       }
-    
-    //End loop over locations
-    }
-    
-    //End loop over spatial observations
+      
+      //End loop over spatial observations
     }
     
     //Update Z
     Z.slice(j) = ZJ;
-  
-  //End loop over columns 
+    
+    //End loop over columns 
   }
   
   //Update parameters object
@@ -1023,14 +1029,14 @@ para SampleXi(datobj DatObj, para Para) {
   arma::vec LStarJ = Para.LStarJ;
   arma::mat U = Para.U;
   arma::colvec XBeta = Para.XBeta;
-  arma::mat XBetaMat = arma::reshape(XBetaMat, M * O, Nu);
-    
+  arma::mat XBetaMat = arma::reshape(XBeta, M * O, Nu);
+  
   //Upper bound for L
   int UpperL = L;
   
   //Declarations
   arma::uword Index;
-
+  
   //Loop over columns K
   for (arma::uword j = 0; j < K; j++) {
     
@@ -1042,7 +1048,7 @@ para SampleXi(datobj DatObj, para Para) {
     
     //Loop over spatial observations
     for (arma::uword o = 0; o < O; o++) {
-    
+      
       arma::mat CovO = Cov(arma::span::all, arma::span(o, o), arma::span::all);
       
       //Loop over locations M
@@ -1057,7 +1063,8 @@ para SampleXi(datobj DatObj, para Para) {
         
         //Loop over clusters L
         arma::vec logProbsRaw(UpperL);
-        logProbsRaw.fill(-arma::datum::inf);
+        // logProbsRaw.fill(-arma::datum::inf);
+        logProbsRaw.fill(-std::numeric_limits<double>::infinity());
         for (arma::uword l = 0; l < UpperL; l++) {
           
           //For finite mixture model
@@ -1091,10 +1098,10 @@ para SampleXi(datobj DatObj, para Para) {
             }
             
           }
-        
-        //End loop over clusters  
+          
+          //End loop over clusters  
         }
-      
+        
         //Use log sum exponential trick to get normalized probabilities
         double Max = arma::max(logProbsRaw);
         double Delta = Max + log(arma::sum(arma::exp(logProbsRaw - Max)));
@@ -1116,14 +1123,14 @@ para SampleXi(datobj DatObj, para Para) {
         
         //Update Lambda
         Lambda(Index, j) = Theta(XiOIJ, j);
-      
-      //End loop over locations  
+        
+        //End loop over locations  
       }
-     
-    //End loop over observations 
+      
+      //End loop over observations 
     }
     
-  //End loop over columns
+    //End loop over columns
   }
   
   //Update parameters object
@@ -1162,7 +1169,7 @@ para SampleTheta(datobj DatObj, para Para) {
   arma::colvec LStarJ = Para.LStarJ;
   arma::mat Upsilon = Para.Upsilon;
   arma::colvec XBeta = Para.XBeta;
-  arma::mat XBetaMat = arma::reshape(XBetaMat, M * O, Nu);
+  arma::mat XBetaMat = arma::reshape(XBeta, M * O, Nu);
   
   //L to loop over
   int UpperL = L;
@@ -1181,7 +1188,7 @@ para SampleTheta(datobj DatObj, para Para) {
     
     //Loop over clusters L
     for (arma::uword l = 0; l < UpperL; l++) {
-        
+      
       //Number of objects in cluster l
       arma::uvec WhichJL = find(XiJ == l);
       int NJL = WhichJL.size();
@@ -1208,7 +1215,7 @@ para SampleTheta(datobj DatObj, para Para) {
         ThetaJL = arma::as_scalar(rnormRcpp(1, MeanThetaJL, sqrt(VarThetaJL)));
         
       }
-
+      
       //Update parameters
       Theta(l, j) = ThetaJL;
       arma::colvec LambdaJ = Lambda.col(j);
@@ -1216,13 +1223,13 @@ para SampleTheta(datobj DatObj, para Para) {
       ThetaJLVec(0) = ThetaJL;
       LambdaJ(WhichJL) = arma::repmat(ThetaJLVec, NJL, 1);
       Lambda.col(j) = LambdaJ;
-
+      
     }
   }
   
   //Final updates
   arma::colvec Mean = arma::kron(EyeNu, Lambda) * Eta + XBeta;
-
+  
   //Update parameters object
   Para.Theta = Theta;
   Para.Lambda = Lambda;

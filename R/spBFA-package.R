@@ -5,7 +5,6 @@
 #' @author Samuel I. Berchuck \email{sib2@duke.edu}
 #'
 #' @name spBFA
-#' @docType package
 #' @import Rcpp
 #' @importFrom stats quantile rnorm runif median model.frame model.matrix
 #' @importFrom graphics abline axis layout par plot points polygon title segments symbols rect text lines
@@ -16,4 +15,4 @@
 #' @importFrom mvtnorm pmvnorm
 #' @importFrom pgdraw pgdraw
 #' @useDynLib spBFA
-NULL
+"_PACKAGE"

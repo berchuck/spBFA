@@ -2,6 +2,7 @@
 % Please edit documentation in R/spBFA-package.R
 \docType{package}
 \name{spBFA}
+\alias{spBFA-package}
 \alias{spBFA}
 \title{spBFA}
 \description{
